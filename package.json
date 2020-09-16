@@ -1,0 +1,25 @@
+{
+  "name": "textalive-app-api",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/textalive-app-api.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TextAliveJp/textalive-app-api.git"
+  },
+  "author": "AIST TextAlive Project <textalive-ml@aist.go.jp> (https://textalive.jp)",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {},
+  "dependencies": {
+    "axios": "^0.19.2",
+    "webfontloader": "^1.6.28"
+  },
+  "bugs": {
+    "url": "https://github.com/TextAliveJp/textalive-app-api/issues"
+  },
+  "homepage": "https://github.com/TextAliveJp/textalive-app-api#readme"
+}
