@@ -2386,7 +2386,7 @@ export declare interface ParameterWidget {
  * @see {@link VideoEntry}
  * @public
  */
-declare interface PartialVideoEntry {
+export declare interface PartialVideoEntry {
     /**
      * 楽曲コード(ID) / Songle song code
      */

@@ -1,23 +1,44 @@
 # TextAlive App API
 
+TextAlive App API は、 **音楽に合わせてタイミングよく歌詞が動く Web アプリケーション（リリックアプリ）** を開発できる JavaScript 用のライブラリです。
+
+この API を使うと、Web 上の楽曲のサビやビートなどの楽曲地図情報を取得したり、Web 上の歌詞のタイミング情報を取得したりできるようになります。そして、一曲のために作り込んだ演出はもちろんのこと、 [TextAlive](https://textalive.jp/) に登録されている全ての楽曲に合わせて動作する演出をプログラミングできます。
+
+[![npm version](https://img.shields.io/npm/v/textalive-app-api)](https://www.npmjs.com/package/textalive-app-api)
+
 ![TextAlive](https://i.gyazo.com/thumb/1000/5301e6f642d255c5cfff98e049b6d1f3-png.png)
-
----
-
-TextAlive App API を使って TextAlive アプリを開発するためのライブラリです。
 
 ## 使い方
 
-npm パッケージ `textalive-app-api` をインストールしてから、 `import { Player } from "textalive-app-api";` のように必要なコンポーネントをインポートして使います。
+TextAlive App API は `script` タグで Web サイトに読み込んだり、 npm パッケージ `textalive-app-api` をインストールすることで使えるようになります。
 
-`Player` クラスの説明は [こちら](https://developer.textalive.jp/packages/textalive-app-api/classes/player.html) にあります。
+ほとんどの機能のエントリーポイントになる `Player` クラスの説明は [こちら](https://developer.textalive.jp/packages/textalive-app-api/classes/player.html) にあります。
+
+### `script` タグによる読み込み
+
+```html
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/textalive-app-api/dist/index.js"></script>
+```
+
+グローバル変数 `TextAliveApp` が定義されるので、 `const { Player } = TextAliveApp;` のように必要なコンポーネントを呼び出して使います。
+
+### npm パッケージのインストール
+
+```sh
+npm install textalive-app-api
+```
+
+`import { Player } from "textalive-app-api";` のように必要なコンポーネントをインポートして使います。
 
 ## 開発者向けドキュメント
 
-詳しくは https://developer.textalive.jp/app をご覧ください。
+- [TextAlive App API チュートリアル](https://developer.textalive.jp/app)
+- [API リファレンス](https://developer.textalive.jp/packages/textalive-app-api)
+- [GitHub サンプルコード](https://github.com/TextAliveJp)
 
-- [TextAlive for Developers トップページ](https://developer.textalive.jp)
-- [`textalive-app-api` API リファレンス](https://developer.textalive.jp/packages/textalive-app-api)
+技術的に分からないことやバグ報告などがあれば、 [GitHub Issues](https://github.com/TextAliveJp/textalive-app-api/issues) までお願いいたします。
+[TextAlive for Developers トップページ](https://developer.textalive.jp) もぜひご覧ください。
 
 ---
 

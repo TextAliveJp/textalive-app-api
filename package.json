@@ -1,6 +1,6 @@
 {
   "name": "textalive-app-api",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "types": "dist/textalive-app-api.d.ts",
@@ -17,6 +17,9 @@
   "dependencies": {
     "axios": "^0.19.2",
     "webfontloader": "^1.6.28"
+  },
+  "optionalDependencies": {
+    "songle-api": "^1.2.2"
   },
   "bugs": {
     "url": "https://github.com/TextAliveJp/textalive-app-api/issues"
