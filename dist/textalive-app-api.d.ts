@@ -1334,6 +1334,12 @@ export declare interface IPlayer {
     
     
     /**
+     * 動画（楽曲情報や歌詞など）が読み込み中か否か
+     *
+     * Whether the video (song, lyrics, etc.) is being loaded or not
+     */
+    readonly isLoading: boolean;
+    /**
      * 動画再生中か否か
      *
      * Whether the video is being played or not
@@ -1617,6 +1623,26 @@ export declare interface IPlayerApp {
      * Current parameter values
      */
     readonly parameters: ParameterValues;
+    /**
+     * ホストへの接続中か否か
+     *
+     * Whether the player is connecting to a host
+     */
+    readonly isConnecting: boolean;
+    /**
+     * ホストへの接続を試みる
+     *
+     * - 親フレームに 5 回までメッセージを送信する
+     * - 返事を 200 [ms] まで待つ
+     * - 最大で計 1 [s] 待つ
+     *
+     * Try connecting to a host
+     *
+     * - posts message to the parent frame for 5 times at most
+     * - waits for the ack response for 200 [ms]
+     * - takes up to 1 [s] to complete
+     */
+    connect(): Promise<boolean>;
 }
 
 /**
@@ -2491,6 +2517,7 @@ export declare class Player implements IPlayer {
      */
     get video(): Video;
     private _video;
+    private _videoPromise;
     
     private _templates;
     
@@ -2538,6 +2565,10 @@ export declare class Player implements IPlayer {
     /**
      * @inheritDoc
      */
+    get isLoading(): boolean;
+    /**
+     * @inheritDoc
+     */
     get isPlaying(): boolean;
     
     /**
@@ -2574,25 +2605,34 @@ export declare class Player implements IPlayer {
      */
     removeListener(listener: PlayerListener): boolean;
     
+    private doCreateFromVideoId;
     
+    private doCreateFromVideo;
     /**
      * @inheritDoc
      */
     createFromSongUrl(songUrl: string, options?: PlayerVideoOptions): Promise<Video>;
+    private doCreateFromSongUrl;
     /**
      * @inheritDoc
      */
     createFromSongPath(songPath: string, options?: PlayerVideoOptions): Promise<Video>;
+    private doCreateFromSongPath;
     
+    private doCreateFromSongId;
     
+    private doCreateFromSongCode;
     /**
      * @inheritDoc
      */
     createFromText(text: string, options?: PlayerVideoOptions): Promise<Video>;
+    private doCreateFromText;
     /**
      * @inheritDoc
      */
     createFromJSON(json: VideoData, options?: PlayerVideoOptions): Promise<Video>;
+    private doCreateFromJSON;
+    private create;
     private finalize;
     private updateMediaPosition;
     
@@ -3192,6 +3232,7 @@ export declare interface PlayerVideoOptions {
      * - When failed, the default method is used
      */
     lyricsDirectAccess?: boolean;
+    
 }
 
 /**
@@ -3588,6 +3629,7 @@ declare interface SonglePlayerBase {
     /** equivalent to calling seekTo(0) and pause() */
     stop(): void;
     position: number;
+    positionTime: number;
     readonly isPlaying: boolean;
     readonly isPaused: boolean;
     readonly isReady: boolean;
@@ -4628,6 +4670,16 @@ export declare interface VideoData {
     phrases?: PhraseData[];
     graphics?: GraphicData[];
     
+}
+
+/**
+ * @public
+ */
+export declare interface VideoDuplicateLoadingError extends Error {
+    /**
+     * 読み込み中の動画を返すPromise / Promise that returns the video currently being loaded
+     */
+    video: Promise<IVideo>;
 }
 
 /**

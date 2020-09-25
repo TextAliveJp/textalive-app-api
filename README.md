@@ -4,6 +4,8 @@ TextAlive App API は、 **音楽に合わせてタイミングよく歌詞が�
 
 この API を使うと、Web 上の楽曲のサビやビートなどの楽曲地図情報を取得したり、Web 上の歌詞のタイミング情報を取得したりできるようになります。そして、一曲のために作り込んだ演出はもちろんのこと、 [TextAlive](https://textalive.jp/) に登録されている全ての楽曲に合わせて動作する演出をプログラミングできます。
 
+**English version available in [README.en.md](https://github.com/TextAliveJp/textalive-app-api/blob/master/README.en.md).**
+
 [![npm version](https://img.shields.io/npm/v/textalive-app-api)](https://www.npmjs.com/package/textalive-app-api) [![Join the chat at https://gitter.im/textalive-app-api/community](https://badges.gitter.im/textalive-app-api/community.svg)](https://gitter.im/textalive-app-api/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ![TextAlive](https://i.gyazo.com/thumb/1000/5301e6f642d255c5cfff98e049b6d1f3-png.png)
@@ -37,7 +39,7 @@ npm install textalive-app-api
 - [API リファレンス](https://developer.textalive.jp/packages/textalive-app-api)
 - [GitHub サンプルコード](https://github.com/TextAliveJp)
 
-技術的に分からないことやバグ報告などがあれば、 [GitHub Issues](https://github.com/TextAliveJp/textalive-app-api/issues) までお願いいたします。
+技術的に分からないことやバグ報告などがあれば、 [GitHub Issues](https://github.com/TextAliveJp/textalive-app-api/issues?q=is%3Aissue) か [Gitter Chat](https://gitter.im/textalive-app-api/community) までお願いいたします。
 [TextAlive for Developers トップページ](https://developer.textalive.jp) もぜひご覧ください。
 
 ---
