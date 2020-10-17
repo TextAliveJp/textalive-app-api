@@ -496,7 +496,6 @@ declare interface FontData {
  *
  * Font info
  * @public
- *
  */
 export declare interface FontInfo {
     /**
@@ -516,13 +515,25 @@ export declare interface FontInfo {
      *
      * Japanese font family name
      */
-    ja: string;
+    ja?: string;
+    /**
+     * CSSのURL
+     *
+     * URL of the CSS file
+     */
+    url?: string;
     /**
      * モリサワ TypeSquare フォントか否か
      *
      * Whether this font is provided by Morisawa TypeSquare or not
      */
     typesquare?: boolean;
+    /**
+     * Google Fonts フォントか否か
+     *
+     * Whether this font is provided by Google Fonts or not
+     */
+    google?: boolean;
     
 }
 
@@ -753,8 +764,21 @@ export declare interface IBeat extends TimedObject {
  * @public
  */
 export declare interface IChar extends ITextUnit {
+    /**
+     * @inheritDoc
+     */
+    animate: RenderingUnitFunction<IChar>;
+    /**
+     * @inheritDoc
+     */
     readonly parent: IWord;
+    /**
+     * @inheritDoc
+     */
     readonly previous: IChar;
+    /**
+     * @inheritDoc
+     */
     readonly next: IChar;
 }
 
@@ -847,7 +871,9 @@ export declare interface IColor {
  * Current video materials
  * @public
  */
-export declare interface IDataLoader {
+export declare interface IDataLoader extends ISongExplorer {
+    /** TextAlive サービスのURL / TextAlive website url */
+    readonly permalink: string;
     /** 動画データ / Video data */
     readonly video: VideoEntry;
     /** 楽曲情報 / Song info */
@@ -860,6 +886,8 @@ export declare interface IDataLoader {
     readonly lyricsId: number;
     /** 歌詞の発声タイミング情報 / Lyrics timing info */
     readonly lyrics: LyricsDiffInfo;
+    /** 歌詞の情報 / Lyrics info */
+    readonly lyricsBody: LyricsBody;
     /** 歌詞テキスト / Lyrics text */
     readonly text: string;
     /** フォントの読み込みステータス / Font loading status */
@@ -960,7 +988,7 @@ export declare interface IFontLoader {
      * @param fonts - フォント名の一覧 / List of font family names
      * @returns 読み込めたフォントの一覧 / List of fonts suceeded to load
      */
-    load(fonts: string[]): Promise<FontInfo[]>;
+    load(fonts: (string | FontInfo)[]): Promise<FontInfo[]>;
     /**
      * 利用可能なすべてのフォントを読み込む
      *
@@ -996,15 +1024,28 @@ export declare interface IFontLoader {
 /**
  * @public
  */
-export declare type IGraphic = IRenderingUnit;
+export declare interface IGraphic extends IRenderingUnit {
+    /**
+     * @inheritDoc
+     */
+    animate: RenderingUnitFunction<IGraphic>;
+    /**
+     * @inheritDoc
+     */
+    readonly previous: IGraphic;
+    /**
+     * @inheritDoc
+     */
+    readonly next: IGraphic;
+}
 
 declare interface ILyricsBodyFetcher {
     parseLyricBody(text: string, parserUrl: string): Promise<string>;
     fetchLyricBody(lyricUrl: string, options: {
         parserPath: string;
         directAccess?: boolean;
-    }): Promise<string>;
-    fetchLocalLyricBody(lyricIdOrSongCode: number | string): Promise<string>;
+    }): Promise<LyricsBody>;
+    fetchLocalLyricBody(lyricIdOrSongCode: number | string): Promise<LyricsBody>;
 }
 
 declare interface ILyricsDiffManager {
@@ -1240,8 +1281,21 @@ export declare interface IMatrix2D {
  * @public
  */
 export declare interface IPhrase extends ITextUnit {
+    /**
+     * @inheritDoc
+     */
+    animate: RenderingUnitFunction<IPhrase>;
+    /**
+     * @inheritDoc
+     */
     readonly children: IWord[];
+    /**
+     * @inheritDoc
+     */
     readonly previous: IPhrase;
+    /**
+     * @inheritDoc
+     */
     readonly next: IPhrase;
     readonly wordCount: number;
     readonly charCount: number;
@@ -1249,7 +1303,7 @@ export declare interface IPhrase extends ITextUnit {
     readonly firstChar: IChar;
     readonly lastWord: IWord;
     readonly lastChar: IChar;
-    findIndex(unit: ITextUnit): number;
+    findIndex(unit: IWord | IChar): number;
 }
 
 /**
@@ -1296,6 +1350,18 @@ export declare interface IPlayer {
      * Media element
      */
     mediaElement: HTMLElement;
+    /**
+     * 音源メディアの直接の配置先となるDOM要素
+     *
+     * Media source element
+     */
+    readonly mediaSourceElement: HTMLElement;
+    /**
+     * 音源などに関するバナーの配置先となるDOM要素
+     *
+     * Media banner element
+     */
+    readonly mediaBannerElement: HTMLElement;
     /**
      * 現在の音源メディアの再生位置 [ms]
      *
@@ -1359,11 +1425,23 @@ export declare interface IPlayer {
      */
     readonly isVideoSeeking: boolean;
     /**
+     * TextAlive Player の情報を表示する `IPlayerBanner` インスタンスです。
+     *
+     * A banner instance that shows the player info.
+     */
+    readonly banner: IPlayerBanner;
+    /**
      * TextAlive Player の音源の再生状態を管理する `Timer` インスタンスです。
      *
      * A timer instance that controls the player status.
      */
     readonly timer: Timer;
+    /**
+     * 音量 [0-100]
+     *
+     * Volume [0-100]
+     */
+    volume: number;
     /**
      * イベントリスナを登録する
      *
@@ -1426,6 +1504,8 @@ export declare interface IPlayer {
      * 楽曲中のサビに関する情報を取得する
      *
      * Get chorus parts in the current song
+     *
+     * @see {@link IDataLoader.getChoruses}
      * @returns サビ情報（見つからなければ空の配列）
      */
     getChoruses(): IRepetitiveSegment[];
@@ -1433,6 +1513,8 @@ export declare interface IPlayer {
      * 指定された位置のサビ情報を取得する
      *
      * Find a chorus part that overlaps with the specified timing
+     *
+     * @see {@link IDataLoader.findChorus}
      * @param time - 位置 [ms] / Position [ms]
      * @param options - optional parameters for finding a chorus part
      * @returns サビ情報（見つからなければ `null`）
@@ -1446,6 +1528,8 @@ export declare interface IPlayer {
      * 楽曲中のビートに関する情報を取得する
      *
      * Get beats in the current song
+     *
+     * @see {@link IDataLoader.getBeats}
      * @returns ビート情報（見つからなければ空の配列）
      */
     getBeats(): IBeat[];
@@ -1453,6 +1537,8 @@ export declare interface IPlayer {
      * 指定された位置のビート情報を取得する
      *
      * Find beat that overlaps with the specified timing
+     *
+     * @see {@link IDataLoader.findBeat}
      * @param time - 位置 [ms] / Position [ms]
      * @param options - 探索オプション / Optional parameters for finding beat
      * @returns ビート情報（見つからなければ `null`）
@@ -1462,6 +1548,8 @@ export declare interface IPlayer {
      * 楽曲中のコード進行に関する情報を取得する
      *
      * Get chord info in the current song
+     *
+     * @see {@link IDataLoader.getChords}
      * @returns コード進行の情報（見つからなければ空の配列）
      */
     getChords(): IChord[];
@@ -1469,6 +1557,8 @@ export declare interface IPlayer {
      * 指定された位置のコード進行を取得する
      *
      * Find chord that overlaps with the specified timing
+     *
+     * @see {@link IDataLoader.findChord}
      * @param time - 位置 [ms] / Position [ms]
      * @param options - 探索オプション / Optional parameters for finding chord
      * @returns コード進行（見つからなければ `null`）
@@ -1479,6 +1569,8 @@ export declare interface IPlayer {
      * 指定された位置の声量を取得する
      *
      * Get vocal amplitude at the specified timing
+     *
+     * @see {@link IDataLoader.getVocalAmplitude}
      * @param time - 位置 [ms] / Position [ms]
      * @returns 声量
      */
@@ -1487,6 +1579,8 @@ export declare interface IPlayer {
      * 楽曲中の最大声量を取得する
      *
      * Get maximum vocal amplitude
+     *
+     * @see {@link IDataLoader.getMaxVocalAmplitude}
      * @returns 最大声量
      */
     getMaxVocalAmplitude(): number;
@@ -1494,6 +1588,8 @@ export declare interface IPlayer {
      * 指定された位置のV/A空間中の座標を取得する
      *
      * Get valence arousal value at the specified timing
+     *
+     * @see {@link IDataLoader.getValenceArousal}
      * @param time - 位置 [ms] / Position [ms]
      * @returns 座標値
      */
@@ -1502,6 +1598,8 @@ export declare interface IPlayer {
      * V/A空間中の座標遷移の中央値を取得する
      *
      * Get median valence arousal value throughout the song
+     *
+     * @see {@link IDataLoader.getMedianValenceArousal}
      * @returns 座標値
      */
     getMedianValenceArousal(): ValenceArousalValue;
@@ -1645,6 +1743,16 @@ export declare interface IPlayerApp {
     connect(): Promise<boolean>;
 }
 
+declare interface IPlayerBanner {
+    readonly domEnabled: boolean;
+    position: PlayerBannerPosition;
+    rounded: boolean;
+    bordered: boolean;
+    shadowed: boolean;
+    background: string;
+    color: string;
+}
+
 /**
  * TextAlive の各種APIアクセスを司るマネージャのコレクションです。
  *
@@ -1701,6 +1809,23 @@ export declare interface IPoint {
 }
 
 /**
+ * 描画ユニット:
+ *
+ * - TextAlive における画面描画処理の最小単位
+ * - 種類（フレーズ、単語、文字、グラフィック）を {@link getType} で取得できる
+ * - 前後のユニットを {@link previous} と {@link next} で取得できる
+ * - （存在する場合）親要素と子要素の一覧をそれぞれ {@link parent} と {@link children} で取得できる
+ * - 開始時刻、終了時刻、その差分を {@link startTime} {@link endTime} および {@link duration} で取得できる
+ *
+ * Rendering unit:
+ *
+ * - The base interface for all rendering unit implementations in TextAlive
+ * - {@link getType} returns the implementation type (phrase, word, character, or graphic)
+ * - {@link previous} and {@link next} return the previous and next unit
+ * - {@link parent} and {@link children} return the parent unit and the list of child units (if applicable)
+ * - {@link startTime} and {@link endTime} return the timing information and {@link duration} returns the duration i.e. `endTime` - `startTime`
+ *
+ * @see {@link TimedObject}
  * @public
  */
 export declare interface IRenderingUnit extends TimedObject {
@@ -1709,16 +1834,23 @@ export declare interface IRenderingUnit extends TimedObject {
      *
      * When `animate` function is defined, TextAlive default behavior (call `animate` functions of all assigned template instances) is suppressed and this function is called instead
      */
-    animate: RenderingUnitFunction;
+    animate: RenderingUnitFunction<IRenderingUnit>;
     readonly parent: IRenderingUnit;
     readonly children: IRenderingUnit[];
     readonly previous: IRenderingUnit;
     readonly next: IRenderingUnit;
+    /** 描画ユニットの長さ [ms] / Duration of this rendering unit [ms] */
     readonly duration: number;
     
     
     
     
+    /**
+     * 指定された楽曲中の位置をこの描画ユニット中の位置 `[0, 1]` にマッピングして返す
+     *
+     * Returns the position in this rendering unit [0, 1]
+     * @param time - 楽曲中の位置 / Position in a song
+     */
     progress(time: number): number;
     
     
@@ -1726,7 +1858,14 @@ export declare interface IRenderingUnit extends TimedObject {
     
     
     
+    /**
+     * この描画ユニットの種類 / Type of this rendering unit
+     * @see {@link UnitTypes}
+     */
     getType(): number;
+    /**
+     * この描画ユニットの文字表現 / String representation of this rendering unit
+     */
     toString(): string;
 }
 
@@ -1763,6 +1902,92 @@ export declare interface IRepetitiveSegments {
     duration: number;
     /** 繰り返し区間の配列 / Array of repetitive segments */
     segments: IRepetitiveSegment[];
+}
+
+declare interface ISongExplorer {
+    /**
+     * 楽曲中のサビに関する情報を取得する
+     *
+     * Get chorus parts in the current song
+     * @returns サビ情報（見つからなければ空の配列）
+     */
+    getChoruses(): IRepetitiveSegment[];
+    /**
+     * 指定された位置のサビ情報を取得する
+     *
+     * Find a chorus part that overlaps with the specified timing
+     * @param time - 位置 [ms] / Position [ms]
+     * @param options - optional parameters for finding a chorus part
+     * @returns サビ情報（見つからなければ `null`）
+     */
+    findChorus(time: number, options?: PlayerFindOptions): IRepetitiveSegment;
+    /**
+     * @deprecated Use of {@link ISongExplorer.findChorusBetween} is deprecated - find a chorus part with {@link ISongExplorer.findChorus} instead.
+     */
+    findChorusBetween(startTime: number, endTime: number): IRepetitiveSegment;
+    /**
+     * 楽曲中のビートに関する情報を取得する
+     *
+     * Get beats in the current song
+     * @returns ビート情報（見つからなければ空の配列）
+     */
+    getBeats(): IBeat[];
+    /**
+     * 指定された位置のビート情報を取得する
+     *
+     * Find beat that overlaps with the specified timing
+     * @param time - 位置 [ms] / Position [ms]
+     * @param options - 探索オプション / Optional parameters for finding beat
+     * @returns ビート情報（見つからなければ `null`）
+     */
+    findBeat(time: number, options?: PlayerFindOptions): IBeat;
+    /**
+     * 楽曲中のコード進行に関する情報を取得する
+     *
+     * Get chord info in the current song
+     * @returns コード進行の情報（見つからなければ空の配列）
+     */
+    getChords(): IChord[];
+    /**
+     * 指定された位置のコード進行を取得する
+     *
+     * Find chord that overlaps with the specified timing
+     * @param time - 位置 [ms] / Position [ms]
+     * @param options - 探索オプション / Optional parameters for finding chord
+     * @returns コード進行（見つからなければ `null`）
+     */
+    findChord(time: number, options?: PlayerFindOptions): IChord;
+    
+    /**
+     * 指定された位置の声量を取得する
+     *
+     * Get vocal amplitude at the specified timing
+     * @param time - 位置 [ms] / Position [ms]
+     * @returns 声量
+     */
+    getVocalAmplitude(time: number): number;
+    /**
+     * 楽曲中の最大声量を取得する
+     *
+     * Get maximum vocal amplitude
+     * @returns 最大声量
+     */
+    getMaxVocalAmplitude(): number;
+    /**
+     * 指定された位置のV/A空間中の座標を取得する
+     *
+     * Get valence arousal value at the specified timing
+     * @param time - 位置 [ms] / Position [ms]
+     * @returns 座標値
+     */
+    getValenceArousal(time: number): ValenceArousalValue;
+    /**
+     * V/A空間中の座標遷移の中央値を取得する
+     *
+     * Get median valence arousal value throughout the song
+     * @returns 座標値
+     */
+    getMedianValenceArousal(): ValenceArousalValue;
 }
 
 declare interface ISongInfoLoader {
@@ -1922,19 +2147,23 @@ declare interface ITextParser {
 declare type ITextPlayer = ITextParser;
 
 /**
+ *
  * @public
  */
 export declare interface ITextUnit extends IRenderingUnit {
+    /**
+     * 文字ユニットに含まれるプレーンテキスト / Plain text contained in this text unit
+     */
     readonly text: string;
-    color: IColor;
-    font: IFont;
-    fontFamily: string;
-    fontStyle: string;
-    fontSize: number;
-    readonly advance: number;
-    readonly ascent: number;
-    readonly descent: number;
-    readonly height: number;
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }
 
 declare interface IUserActionManager {
@@ -1983,9 +2212,12 @@ declare interface IUserTypeManager {
 }
 
 /**
+ * 動画（{@link IRenderingUnit} を格納する入れ物）
+ *
+ * Video (A container for {@link IRenderingUnit} objects)
  * @public
  */
-export declare interface IVideo {
+export declare interface IVideo extends TimedObject {
     readonly phrases: IPhrase[];
     readonly graphics: IGraphic[];
     
@@ -2004,15 +2236,42 @@ export declare interface IVideo {
     readonly lastWord: IWord;
     readonly lastChar: IChar;
     readonly lastGraphic: IGraphic;
-    findIndex(unit: IRenderingUnit): number;
-    findPhrase(time: number, options?: FindTimedObjectOptions): IPhrase;
-    findWord(time: number, options?: FindTimedObjectOptions): IWord;
-    findChar(time: number, options?: FindTimedObjectOptions): IChar;
-    findGraphic(time: number, options?: FindTimedObjectOptions): IGraphic;
+    /**
+     * 指定された位置を `[0, 1]` にマッピングして返す
+     *
+     * Returns the position in [0, 1]
+     * @param time - 位置 / Position in this video
+     */
+    progress(time: number): number;
     getPhrase(index: number): IPhrase;
     getWord(index: number): IWord;
     getChar(index: number): IChar;
     getGraphic(index: number): IGraphic;
+    findIndex(unit: IRenderingUnit): number;
+    /**
+     * Get phrase object in the current video
+     * @param time - position [ms]
+     * @param options - optional parameters for finding phrase
+     */
+    findPhrase(time: number, options?: FindTimedObjectOptions): IPhrase;
+    /**
+     * Get word object in the current video
+     * @param time - position [ms]
+     * @param options - optional parameters for finding word
+     */
+    findWord(time: number, options?: FindTimedObjectOptions): IWord;
+    /**
+     * Get character object in the current video
+     * @param time - position [ms]
+     * @param options - optional parameters for finding character
+     */
+    findChar(time: number, options?: FindTimedObjectOptions): IChar;
+    /**
+     * Get graphic object in the current video
+     * @param time - position [ms]
+     * @param options - optional parameters for finding graphic
+     */
+    findGraphic(time: number, options?: FindTimedObjectOptions): IGraphic;
 }
 
 declare interface IVideoLoader {
@@ -2025,9 +2284,25 @@ declare type IVideoPlayer = IVideoLoader;
  * @public
  */
 export declare interface IWord extends ITextUnit {
+    /**
+     * @inheritDoc
+     */
+    animate: RenderingUnitFunction<IWord>;
+    /**
+     * @inheritDoc
+     */
     readonly parent: IPhrase;
+    /**
+     * @inheritDoc
+     */
     readonly children: IChar[];
+    /**
+     * @inheritDoc
+     */
     readonly previous: IWord;
+    /**
+     * @inheritDoc
+     */
     readonly next: IWord;
     /**
      * 品詞
@@ -2064,7 +2339,7 @@ export declare interface IWord extends ITextUnit {
     readonly charCount: number;
     readonly firstChar: IChar;
     readonly lastChar: IChar;
-    findIndex(unit: ITextUnit): number;
+    findIndex(unit: IChar): number;
 }
 
 /**
@@ -2109,6 +2384,22 @@ declare interface Lyrics {
     created_at: string;
     /** 更新日時 / Updated date */
     updated_at: string;
+}
+
+/**
+ * 歌詞テキスト
+ *
+ * Lyrics body
+ * @public
+ */
+declare interface LyricsBody {
+    text: string;
+    artist?: {
+        name: string;
+        url?: string;
+    };
+    name?: string;
+    url?: string;
 }
 
 /**
@@ -2418,7 +2709,17 @@ export declare interface PartialVideoEntry {
      */
     songleCode?: string;
     /**
-     * 歌詞ID / Lyrics ID
+     * 歌詞ID
+     *
+     * - `-1`: 最新の歌詞情報が使われる
+     * - `0`: 歌詞情報を読み込まない
+     * - それ以外: 指定されたIDの歌詞情報が使われる
+     *
+     * Lyrics ID
+     *
+     * - `-1`: Latest lyrics info is used
+     * - `0`: No lyrics info will be loaded
+     * - Or otherwise, the specified lyrics info is used
      */
     lyricId?: number;
     /**
@@ -2463,7 +2764,7 @@ declare class Phrase extends TextUnit implements IPhrase {
     getWord(index: number): Word;
     getChar(index: number): Char;
     addWord(w: Word): Word;
-    findIndex(unit: TextUnit): number;
+    findIndex(unit: Word | Char): number;
     getType(): number;
 }
 
@@ -2536,6 +2837,16 @@ export declare class Player implements IPlayer {
     /**
      * @inheritDoc
      */
+    get mediaSourceElement(): HTMLElement;
+    private _mediaSourceElement;
+    /**
+     * @inheritDoc
+     */
+    get mediaBannerElement(): HTMLElement;
+    private _mediaBannerElement;
+    /**
+     * @inheritDoc
+     */
     get mediaPosition(): number;
     private _mediaPosition;
     /**
@@ -2587,8 +2898,19 @@ export declare class Player implements IPlayer {
     /**
      * @inheritDoc
      */
+    get banner(): IPlayerBanner;
+    private _banner;
+    /**
+     * @inheritDoc
+     */
     get timer(): Timer;
     private _timer;
+    /**
+     * @inheritDoc
+     */
+    set volume(val: number);
+    get volume(): number;
+    private _volume;
     /**
      * @param options - プレイヤーの初期化オプション / player options
      * @see {@link IPlayer.options}
@@ -2688,6 +3010,7 @@ export declare class Player implements IPlayer {
      * @deprecated Use of {@link Player.setMediaElement} is deprecated - set value with {@link IPlayer.mediaElement} property instead.
      */
     setMediaElement(element: HTMLElement): void;
+    private updateMediaElement;
     /**
      * @inheritDoc
      */
@@ -2851,6 +3174,8 @@ declare interface PlayerAppSongOptions {
     repetitiveSegmentId?: number;
 }
 
+declare type PlayerBannerPosition = "top" | "top left" | "top right" | "bottom" | "bottom left" | "bottom right" | "left" | "left top" | "left bottom" | "right" | "right top" | "right bottom" | "embed" | null;
+
 /**
  * TextAlive Player のイベントを発火するエミッタ
  */
@@ -2867,7 +3192,7 @@ declare class PlayerEventEmitter implements PlayerListener {
     onVocalAmplitudeLoad(vocalAmplitude: VocalAmplitude, reason?: Error): void;
     onValenceArousalLoad(valenceArousal: ValenceArousal, reason?: Error): void;
     onLyricsLoad(lyrics: LyricsDiffInfo, reason?: Error): void;
-    onTextLoad(text: string, reason?: Error): void;
+    onTextLoad(text: LyricsBody, reason?: Error): void;
     /**
      * Who emit this event? - PlayerApp.ts
      * @param app
@@ -2982,6 +3307,11 @@ declare class PlayerEventEmitter implements PlayerListener {
      * @param size
      */
     onResize(size: PlayerSize): void;
+    /**
+     * Who emit this event? - Stage.ts
+     * @param volume
+     */
+    onVolumeUpdate(volume: number): void;
     addListener(listener: PlayerListener): void;
     removeListener(listener: PlayerListener): boolean;
 }
@@ -3022,6 +3352,13 @@ export declare interface PlayerEventListener {
      * @param size - ステージのサイズ / Stage size
      */
     onResize?(size: PlayerSize): void;
+    /**
+     * 音量が変更されたときに呼ばれる
+     *
+     * Called when the player volume is updated
+     * @param volume - 音量 / Volume [0-100]
+     */
+    onVolumeUpdate?(volume: number): void;
     /**
      * 動画の再生位置が変更されたときに呼ばれる
      *
@@ -3110,6 +3447,16 @@ export declare type PlayerFindOptions = FindTimedObjectOptions;
 export declare type PlayerListener = PlayerEventListener & PlayerAppListener & LoaderListener;
 
 /**
+ * TextAlive ロゴ (SVGタグ)
+ *
+ * TextAlive logo as a SVG tag
+ *
+ * - `.bg`: background
+ * - `.fg`: foreground
+ */
+export declare const PlayerLogoImage = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 200\"><defs><style>.bg{fill:#1f4391;}.fg{fill:#fff;}</style></defs><g class=\"logo-sq\"><rect class=\"bg\" x=\"-20\" y=\"-20\" width=\"240\" height=\"240\"/><g class=\"textalive-logo-art\"><path class=\"fg\" d=\"M97.33,130.81V142a3,3,0,0,0,4.78,2.41l56.81-42.09a3,3,0,0,0,0-4.81l-8.33-6.14Z\"/><path class=\"fg\" d=\"M137.14,81.43l-35-25.84A3,3,0,0,0,97.33,58v52.92Z\"/><path class=\"fg\" d=\"M51,55H80.33a2,2,0,0,1,2,2V71.67a0,0,0,0,1,0,0H51a2,2,0,0,1-2-2V57A2,2,0,0,1,51,55Z\"/><path class=\"fg\" d=\"M44.83,107.5h56.33a2,2,0,0,1,2,2v12.67a2,2,0,0,1-2,2H44.83a0,0,0,0,1,0,0V107.5A0,0,0,0,1,44.83,107.5Z\" transform=\"translate(189.83 41.84) rotate(90)\"/></g></g></svg>";
+
+/**
  * {@link Timer} が音源の再生位置情報を更新する際に呼び出すコールバック関数の型情報
  *
  * Type definition for a callback function used by {@link Timer} to update the current music playback position
@@ -3145,6 +3492,12 @@ export declare interface PlayerOptions {
      * A HTML element to host media elements.
      */
     mediaElement?: HTMLElement;
+    /**
+     * 音源メディアの関連情報を表示する位置; 指定がなければ `embed` と見なされ、メディア直下に表示されます。
+     *
+     * Banner position.
+     */
+    mediaBannerPosition?: PlayerBannerPosition;
     
     /**
      * 時刻のアップデートイベントが発行されすぎるのを防ぐために使われるスロットリング機構の発行間隔です。
@@ -3166,7 +3519,7 @@ export declare interface PlayerOptions {
      *
      * @see {@link IFontLoader.listAvailableFonts}
      */
-    fontFamilies?: string[];
+    fontFamilies?: (FontInfo | string)[];
     
     
     /**
@@ -3341,7 +3694,7 @@ declare class RenderingUnit implements IRenderingUnit {
     /**
      * @inheritDoc
      */
-    animate: RenderingUnitFunction;
+    animate: RenderingUnitFunction<IRenderingUnit>;
     get video(): Video;
     get parent(): RenderingUnit;
     get children(): RenderingUnit[];
@@ -3382,7 +3735,7 @@ declare class RenderingUnit implements IRenderingUnit {
 /**
  * @public
  */
-export declare type RenderingUnitFunction = (now: number, u: IRenderingUnit) => void;
+export declare type RenderingUnitFunction<U extends IRenderingUnit> = (now: number, u: U) => void;
 
 /**
  * サビなどの繰り返し区間の情報 / Repetitive segment info (e.g., chorus segment)
@@ -3628,6 +3981,9 @@ declare interface SonglePlayerBase {
     seekTo(position: number): void;
     /** equivalent to calling seekTo(0) and pause() */
     stop(): void;
+    volume: number;
+    MinVolume: number;
+    MaxVolume: number;
     position: number;
     positionTime: number;
     readonly isPlaying: boolean;
@@ -3905,6 +4261,7 @@ declare interface SongleSyncPluginBase {
 export declare class SongleTimer implements Timer {
     private options;
     private emitter;
+    private volumeListener;
     private updateMediaPosition;
     private player;
     private _songlePlayer;
@@ -3956,6 +4313,7 @@ export declare class SongleTimer implements Timer {
      * @inheritDoc
      */
     dispose(): void;
+    private onVolumeUpdate;
 }
 
 /**
@@ -4327,10 +4685,10 @@ export declare interface TextLoaderListener {
      * 歌詞テキストが読み込まれたときに呼ばれる
      *
      * Called when lyrics text is loaded
-     * @param lyricsText - 歌詞テキスト
+     * @param lyricsBody - 歌詞テキスト
      * @param reason - 失敗したときの理由 / Reason for failures (if any)
      */
-    onTextLoad?(lyricsText: string, reason?: Error): void;
+    onTextLoad?(lyricsBody: LyricsBody, reason?: Error): void;
 }
 
 declare interface TextParsingResponse {
@@ -4340,6 +4698,10 @@ declare interface TextParsingResponse {
 }
 
 declare class TextUnit extends RenderingUnit implements ITextUnit {
+    /**
+     * @inheritDoc
+     */
+    animate: RenderingUnitFunction<ITextUnit>;
     get text(): string;
     get color(): Color;
     set color(val: Color);
@@ -4631,33 +4993,16 @@ declare class Video implements IVideo {
     private expandTime;
     findIndex(unit: RenderingUnit): number;
     getPhrase(index: number): Phrase;
-    getGraphic(index: number): Graphic;
     getWord(index: number): Word;
     getChar(index: number): Char;
-    /**
-     * Get character object in the current video
-     * @param time - position [ms]
-     * @param options - optional parameters for finding character
-     */
-    findChar(time: number, options?: FindTimedObjectOptions): Char;
-    /**
-     * Get word object in the current video
-     * @param time - position [ms]
-     * @param options - optional parameters for finding word
-     */
-    findWord(time: number, options?: FindTimedObjectOptions): Word;
-    /**
-     * Get phrase object in the current video
-     * @param time - position [ms]
-     * @param options - optional parameters for finding phrase
-     */
+    getGraphic(index: number): Graphic;
     findPhrase(time: number, options?: FindTimedObjectOptions): Phrase;
-    /**
-     * Get graphic object in the current video
-     * @param time - position [ms]
-     * @param options - optional parameters for finding graphic
-     */
+    findWord(time: number, options?: FindTimedObjectOptions): Word;
+    findChar(time: number, options?: FindTimedObjectOptions): Char;
     findGraphic(time: number, options?: FindTimedObjectOptions): Graphic;
+    contains(time: number): boolean;
+    overlaps(startTime: number, endTime: number): boolean;
+    progress(time: number): number;
 }
 
 /**
@@ -4863,7 +5208,7 @@ declare class Word extends TextUnit implements IWord {
     get firstChar(): Char;
     get lastChar(): Char;
     addChar(c: Char): void;
-    findIndex(unit: TextUnit): number;
+    findIndex(unit: Char): number;
     getType(): number;
 }
 

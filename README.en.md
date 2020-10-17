@@ -12,7 +12,7 @@ For the English overview of the TextAlive project, please refer to [the academic
 
 [![npm version](https://img.shields.io/npm/v/textalive-app-api)](https://www.npmjs.com/package/textalive-app-api) [![Join the chat at https://gitter.im/textalive-app-api/community](https://badges.gitter.im/textalive-app-api/community.svg)](https://gitter.im/textalive-app-api/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-![TextAlive](https://i.gyazo.com/thumb/1000/5301e6f642d255c5cfff98e049b6d1f3-png.png)
+![TextAlive](https://i.gyazo.com/f202c89bb21d0ee24c5213565fe7d1b0.png)
 
 ## Usage
 
