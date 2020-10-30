@@ -331,7 +331,7 @@ export declare type DataLoaderListener = VideoLoaderListener & SongLoaderListene
  */
 export declare function dataUrlToString(url: string): string;
 
-declare interface DecomposedProps {
+export declare interface DecomposedProps {
     x?: number;
     y?: number;
     scaleX?: number;
@@ -485,7 +485,7 @@ declare class Font implements IFont {
 /**
  * @public
  */
-declare interface FontData {
+export declare interface FontData {
     fontFamily?: string;
     fontSize?: number;
     fontStyle?: string;
@@ -1348,6 +1348,8 @@ export declare interface IPlayer {
      * 音源メディアの配置先となるDOM要素
      *
      * Media element
+     *
+     * @see {@link IPlayer.banner}
      */
     mediaElement: HTMLElement;
     /**
@@ -1743,6 +1745,24 @@ export declare interface IPlayerApp {
     connect(): Promise<boolean>;
 }
 
+/**
+ * **IPlayerBanner**
+ *
+ * TextAlive Player の情報を表示する `IPlayerBanner` インスタンスです。Webブラウザで実行されると以下のようなDOM要素が生成されます。
+ *
+ * - CSSクラス `textalive-banner` を持つ {@link IPlayer.mediaElement} の子要素になります
+ * - TextAliveサービスサイトへのリンクになっているアイコンを子要素に持ちます
+ * - 楽曲配信元へのリンクになっているCSSクラス `song` を持つアンカーを子要素に持ちます
+ * - 歌詞配信元へのリンクになっているCSSクラス `lyrics` を持つアンカーを子要素に持ちます
+ *
+ * A banner instance that shows the player info. When executed in a web browser, the banner is shown as a DOM element with the following conditions.
+ *
+ * - The banner is shown as a child element of {@link IPlayer.mediaElement} with the CSS class `textalive-banner`
+ * - The banner contains an icon link to the TextAlive website
+ * - The banner contains an anchor to the song URL with the CSS class `song`
+ * - The banner also contains an anchor to the lyrics URL with the CSS class `lyrics`
+ * @public
+ */
 declare interface IPlayerBanner {
     readonly domEnabled: boolean;
     position: PlayerBannerPosition;
@@ -2392,7 +2412,7 @@ declare interface Lyrics {
  * Lyrics body
  * @public
  */
-declare interface LyricsBody {
+export declare interface LyricsBody {
     text: string;
     artist?: {
         name: string;
@@ -2421,13 +2441,57 @@ declare interface LyricsDiff {
  * Detailed lyrics diff information
  * @public
  */
-export declare interface LyricsDiffInfo {
+export declare interface LyricsDiffInfo extends LyricsTimingInfo {
     /**
      * 歌詞発声タイミングの訂正ID
      *
      * Lyrics diff ID
      */
     id: number;
+}
+
+/**
+ * 歌詞発声タイミングの推定結果
+ *
+ * Results of lyrics timing estimation
+ * @public
+ */
+export declare interface LyricsInfo extends LyricsTimingInfo {
+    /**
+     * 歌詞発声タイミングのID
+     */
+    id: number;
+    /**
+     * 歌詞発声タイミングの訂正情報
+     *
+     * Lyrics diff info
+     */
+    diff: {
+        id: number;
+    };
+    /**
+     * Songle で推定中か否か
+     *
+     * Songle analysis processing status
+     */
+    processing?: boolean;
+    /**
+     * Songle での推定が失敗したか否か
+     *
+     * Songle analysis failure status
+     */
+    failed?: boolean;
+    
+    
+}
+
+/**
+ * 歌詞発声タイミングの情報
+ *
+ * Lyrics timing information
+ * @public
+ */
+export declare interface LyricsTimingInfo {
     /**
      * 歌詞URL
      *
@@ -2437,11 +2501,6 @@ export declare interface LyricsDiffInfo {
     
     
     
-}
-
-declare interface LyricsTiming {
-    start_time: number;
-    end_time: number;
 }
 
 /**
@@ -3174,7 +3233,7 @@ declare interface PlayerAppSongOptions {
     repetitiveSegmentId?: number;
 }
 
-declare type PlayerBannerPosition = "top" | "top left" | "top right" | "bottom" | "bottom left" | "bottom right" | "left" | "left top" | "left bottom" | "right" | "right top" | "right bottom" | "embed" | null;
+export declare type PlayerBannerPosition = "top" | "top left" | "top right" | "bottom" | "bottom left" | "bottom right" | "left" | "left top" | "left bottom" | "right" | "right top" | "right bottom" | "embed" | null;
 
 /**
  * TextAlive Player のイベントを発火するエミッタ
@@ -3191,7 +3250,7 @@ declare class PlayerEventEmitter implements PlayerListener {
     onSongInfoLoad(songInfo: SongInfo, reason?: Error): void;
     onVocalAmplitudeLoad(vocalAmplitude: VocalAmplitude, reason?: Error): void;
     onValenceArousalLoad(valenceArousal: ValenceArousal, reason?: Error): void;
-    onLyricsLoad(lyrics: LyricsDiffInfo, reason?: Error): void;
+    onLyricsLoad(lyrics: LyricsInfo, reason?: Error): void;
     onTextLoad(text: LyricsBody, reason?: Error): void;
     /**
      * Who emit this event? - PlayerApp.ts
@@ -3491,7 +3550,7 @@ export declare interface PlayerOptions {
      *
      * A HTML element to host media elements.
      */
-    mediaElement?: HTMLElement;
+    mediaElement?: HTMLElement | string;
     /**
      * 音源メディアの関連情報を表示する位置; 指定がなければ `embed` と見なされ、メディア直下に表示されます。
      *
@@ -4680,7 +4739,7 @@ export declare interface TextLoaderListener {
      * @param lyrics - 発声タイミングの情報 / Lyrics timing info
      * @param reason - 失敗したときの理由 / Reason for failures (if any)
      */
-    onLyricsLoad?(lyrics: LyricsDiffInfo, reason?: Error): void;
+    onLyricsLoad?(lyrics: LyricsInfo, reason?: Error): void;
     /**
      * 歌詞テキストが読み込まれたときに呼ばれる
      *
@@ -4846,7 +4905,7 @@ export declare interface TimerInitOptions {
 /**
  * @public
  */
-declare interface UnitData {
+export declare interface UnitData {
     startTime?: number;
     endTime?: number;
     

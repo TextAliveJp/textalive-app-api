@@ -1,6 +1,6 @@
 {
   "name": "textalive-app-api",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "types": "dist/textalive-app-api.d.ts",
@@ -8,6 +8,13 @@
     "type": "git",
     "url": "git+https://github.com/TextAliveJp/textalive-app-api.git"
   },
+  "keywords": [
+    "textalive",
+    "songle",
+    "lyrics",
+    "creative coding",
+    "api"
+  ],
   "author": "AIST TextAlive Project <textalive-ml@aist.go.jp> (https://textalive.jp)",
   "license": "SEE LICENSE IN LICENSE.md",
   "scripts": {
