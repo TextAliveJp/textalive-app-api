@@ -1,6 +1,6 @@
 {
   "name": "textalive-app-api",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "types": "dist/textalive-app-api.d.ts",

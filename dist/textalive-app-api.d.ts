@@ -1706,13 +1706,19 @@ export declare interface IPlayerApp {
      */
     readonly host: PlayerAppHost;
     /**
-     * クエリパラメタなどによりホストから指定されている再生対象の楽曲URL
+     * クエリパラメタまたはTextAliveホストにより指定されている再生対象の楽曲URL
+     *
+     * - アプリは起動時にクエリパラメタを調べ、楽曲が指定されていれば自動的に {@link IPlayer.createFromSongUrl} で楽曲情報の読み込みを開始します（ホストに接続されていても、クエリパラメタによる指定がなければ空になります）
+     * - アプリがTextAliveホストに接続されると、ホストの指示により楽曲が上書きされることがあります（この後に {@link PlayerAppListener.onAppMediaChange} イベントが呼ばれます）
      *
      * Song url specified by the query parameter or updated by the media message
+     *
+     * - During the initialization of this app, it automatically looks for the song URL in the query parameter. When the song URL is specified, it loads the song by calling {@link IPlayer.createFromSongUrl}.
+     * - When the app is connected to a host, the host might overwrite the song URL, resulting in the {@link PlayerAppListener.onAppMediaChange} event.
      */
     readonly songUrl: string;
     /**
-     * クエリパラメタなどによりホストから指定されている楽曲データの読み込みオプション
+     * クエリパラメタまたはTextAliveホストにより指定されている楽曲データの読み込みオプション
      *
      * Options to load song data specified by the query parameter or updated by the media message
      */
@@ -1726,7 +1732,7 @@ export declare interface IPlayerApp {
     /**
      * ホストへの接続中か否か
      *
-     * Whether the player is connecting to a host
+     * Whether the player is trying to connect to a host
      */
     readonly isConnecting: boolean;
     /**
@@ -2082,6 +2088,7 @@ declare interface ISongURLManager {
     isUploaderPath(path: string): boolean;
     getUploaderGuid(path: string): string;
     getSongUrlFromUploaderGuid(guid: string): string;
+    getAltSongUrlFromUploaderGuid(guid: string): string;
     getSongUrlFromPath(path: string): string;
     isYouTubeUrl(url: string): boolean;
     isNicovideoUrl(url: string): boolean;
@@ -2187,12 +2194,15 @@ export declare interface ITextUnit extends IRenderingUnit {
 }
 
 declare interface IUserActionManager {
+    getServerStatus(): Promise<ServerStatus>;
+    doGetServerStatus(): Promise<ServerStatus>;
     getProfile(): Promise<UserProfile>;
     doGetProfile(): Promise<UserProfile>;
     getToken(): Promise<string>;
     doGetToken(): Promise<string>;
     getMergingUsers(): Promise<UserEntry[]>;
     mergeUsers(): Promise<UserEntry>;
+    updateUser(entry: Partial<UserEntry>): Promise<UserEntry>;
     authenticate(userId: number, password: string): Promise<UserProfile>;
 }
 
@@ -3842,6 +3852,16 @@ declare interface RuntimeVideo {
     removeGraphic(g: IGraphic): void;
 }
 
+declare interface ServerStatus {
+    lang: string;
+    version: string;
+    releaseDate: string;
+    status: {
+        core: "ready" | "maintenance";
+        renderer: "ready" | "maintenance";
+    };
+}
+
 /**
  * @param t - Timing [0, 1]
  */
@@ -3941,17 +3961,52 @@ declare interface SongAnalysis {
 }
 
 declare type SongBeat = [
-/** startTime [s] */ number, 
-/** ? */ number, 
-/** length */ number, 
-/** position */ number, 
-/** ? */ number];
+    /** startTime [s] */ number,
+    /** ? */ number,
+    /** length */ number,
+    /** position */ number,
+    /** ? */ number
+];
 
 declare type SongChord = [
-/** startTime [s] */ number, 
-/** endTime [s] */ number, 
-/** name */ string, 
-/** ? */ any[]];
+    /** startTime [s] */ number,
+    /** endTime [s] */ number,
+    /** name */ string,
+    /** ? */ any[]
+];
+
+/**
+ * Type definitions for Songle API (incomplete)
+ */
+declare interface Songle {
+    Player: SonglePlayerConstructor;
+    SyncPlayer: SongleSyncPlayerConstructor;
+    Plugin: SonglePluginCollection;
+    Media: SongleMediaCollection;
+    System: SongleSystem;
+    SongleAPI: SongleAPICollection;
+}
+
+declare interface SongleAPICollection {
+    SongAPI: {
+        get(mediaSourceUrl: string, options?: any): Promise<any>;
+    };
+    BeatAPI: {
+        get(mediaSourceUrl: string, options?: any): Promise<any>;
+    };
+    ChordAPI: {
+        get(mediaSourceUrl: string, options?: any): Promise<any>;
+    };
+    MelodyAPI: {
+        get(mediaSourceUrl: string, options?: any): Promise<any>;
+    };
+    ChorusAPI: {
+        get(mediaSourceUrl: string, options?: any): Promise<any>;
+    };
+    VariationAPI: {
+        get(mediaSourceUrl: string, options?: any): Promise<any>;
+    };
+}
 
 declare interface SongleBeat {
     bpm: number;
@@ -3998,6 +4053,14 @@ declare interface SongleMedia {
     pause(): void;
     stop(): void;
     [key: string]: any;
+}
+
+declare interface SongleMediaCollection {
+    SuperClass: any;
+    Headless: any;
+    HTMLMediaElement: any;
+    NNVideo: any;
+    YTVideo: any;
 }
 
 declare interface SongleMediaObsoleteOptions {
@@ -4106,6 +4169,20 @@ declare interface SonglePlayerBase {
             seekTime: number;
         };
     }) => void, options?: SongleEventOptions): void;
+}
+
+declare interface SonglePlayerConstructor {
+    new (options?: SonglePlayerOptions): SonglePlayer;
+    readonly Name: string;
+    readonly Type: string;
+    readonly MinVolume: number;
+    readonly MaxVolume: number;
+}
+
+declare interface SonglePlayerOptions {
+    accessToken?: string;
+    secretToken?: string;
+    mediaElement?: HTMLElement;
 }
 
 declare interface SonglePlayerWithBeatPlugin {
@@ -4251,6 +4328,27 @@ declare interface SonglePlugin {
     dispatcherName: string;
 }
 
+declare interface SonglePluginCollection {
+    SuperClass: SonglePluginConstructor;
+    Beat: SonglePluginConstructor;
+    Chord: SonglePluginConstructor;
+    Melody: SonglePluginConstructor;
+    Chorus: SonglePluginConstructor;
+    Variation: SonglePluginConstructor;
+    SongleSync: SongleSyncPluginConstructor;
+    SongleWidget: SongleWidgetPluginConstructor;
+}
+
+declare interface SonglePluginConstructor {
+    new (): any;
+    readonly Name: string;
+    readonly Type: string;
+}
+
+declare interface SongleSyncPlayerConstructor extends SonglePlayerConstructor {
+    new (options?: SonglePlayerOptions & SongleSyncPluginOptions): SonglePlayerWithSyncPlugin;
+}
+
 declare interface SongleSyncPlugin extends SonglePlugin, SongleSyncPluginBase {
     readonly clockWorker: any;
     readonly stageWorker: any;
@@ -4301,6 +4399,36 @@ declare interface SongleSyncPluginBase {
     setMessage(message: string): Promise<any>;
 }
 
+declare interface SongleSyncPluginConstructor extends SonglePluginConstructor {
+    new (options?: SongleSyncPluginOptions): SongleSyncPlugin;
+}
+
+declare interface SongleSyncPluginOptions {
+    autoUseMedia?: boolean;
+    autoUseMediaOptions?: SongleMediaOptions;
+    clockWorkerIntervalTime?: number;
+    stageWorkerIntervalTime?: number;
+    stateWorkerIntervalTime?: number;
+    mediaWorkerIntervalTime?: number;
+    historyWorkerIntervalTime?: number;
+}
+
+declare interface SongleSystem {
+    readonly currentClockTime: number;
+    readonly global: Window;
+    readonly isStandalone: string;
+    readonly isWebBrowser: boolean;
+    readonly language: string;
+    readonly referer: string;
+    readonly userAgent: string;
+    readonly searchQueries: {
+        [key: string]: string;
+    };
+    showDebugLog: boolean;
+    showErrorLog: boolean;
+    showLicense: boolean;
+}
+
 /**
  * **Songle timer**
  *
@@ -4314,7 +4442,7 @@ declare interface SongleSyncPluginBase {
  * - Constructor option {@link SongleTimerOptions} with `accessToken` property enables Songle Sync
  * - After {@link PlayerEventListener.onTimerReady} event is emitted, {@link SongleTimer.songlePlayer} will provide Songle API `Player` instance
  *
- * @see {@link http://api.songle.jp/}
+ * @see {@link https://api.songle.jp/}
  * @public
  */
 export declare class SongleTimer implements Timer {
@@ -4406,6 +4534,49 @@ export declare interface SongleTimerOptions {
     secretToken?: string;
     
     
+    /**
+     * Songle APIのエントリーポイント
+     * - `import Songle from "songle-api"` のようにして得られるオブジェクト
+     * - 指定しなければ自動的に dynamic import または script タグの挿入によって読み込まれる
+     *
+     * Songle API entrypoint
+     * - The object that can be gained by calling `import Songle from "songle-api"`
+     * - If not specified, Songle API gets initialized automatically through dynamic import or <script> tag insertion
+     *
+     * @see {@link https://api.songle.jp}
+     */
+    songle?: Songle;
+}
+
+declare interface SongleWidgetPlugin extends SonglePlugin {
+    readonly element: HTMLElement;
+}
+
+declare interface SongleWidgetPluginConstructor extends SonglePluginConstructor {
+    new (options?: SongleWidgetPluginOptions): SongleWidgetPlugin;
+}
+
+declare interface SongleWidgetPluginOptions {
+    element: HTMLElement | string;
+    width?: number;
+    height?: number;
+    responsive?: boolean;
+    showController?: boolean;
+    showOriginalSiteLink?: boolean;
+    showMusicMap?: boolean;
+    showSongleJpSiteLink?: boolean;
+    controllerWidth?: number;
+    controllerHeight?: number;
+    controllerMouseEnterColor?: string;
+    controllerMouseLeaveColor?: string;
+    language?: string;
+    musicMapWidth?: number;
+    musicMapHeight?: number;
+    musicMapOuterBackgroundColor?: string;
+    musicMapInnerBackgroundColor?: string;
+    musicMapChorusSectionColor?: string;
+    musicMapRepeatedSectionColor?: string;
+    musicMapCursorColor?: string;
 }
 
 /**
@@ -4586,8 +4757,13 @@ export declare interface SongStatus {
     lyrics: boolean;
 }
 
-declare type SongVoice = [[/** current f0 */ number, /** initially recognized f0 */ number], 
-/** number of frames (10 [ms] per each frame) */ number];
+declare type SongVoice = [
+    [ /** current f0 */
+        number,
+        number
+    ],
+    /** number of frames (10 [ms] per each frame) */ number
+];
 
 /**
  * 二分探索
@@ -4935,7 +5111,6 @@ declare interface UserEntry {
     name?: string;
     displayName?: string;
     photoUrl?: string;
-    language?: string;
     twitterId?: number;
     twitterName?: string;
     twitterDisplayName?: string;
@@ -4958,6 +5133,7 @@ declare interface UserEntry {
     songleUserName?: string;
     songleAccessToken?: string;
     songleRefreshToken?: string;
+    language?: string;
     createdDate?: string;
     updatedDate?: string;
 }
