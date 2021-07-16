@@ -1,3 +1,4 @@
+import { sortedIndex } from 'sortedindex';
 
 /**
  * TextAlive ログインに使えるサービス / Account service for TextAlive login
@@ -166,6 +167,10 @@ declare class Char extends TextUnit implements IChar {
     private _font;
     private _color;
     constructor(data: CharData);
+    /**
+     * @inheritDoc
+     */
+    animate: RenderingUnitFunction<Char>;
     get parent(): Word;
     get previous(): Char;
     get next(): Char;
@@ -433,6 +438,17 @@ declare interface EndpointData {
         protocol?: string;
         domain: string;
         server?: string;
+        appToken?: string;
+        authUser?: string;
+        authToken?: string;
+    };
+    content: {
+        protocol?: string;
+        domain: string;
+        server?: string;
+    };
+    client: {
+        version?: string;
     };
 }
 
@@ -523,6 +539,12 @@ export declare interface FontInfo {
      */
     url?: string;
     /**
+     * CSSのURL (頻出文字のみを抽出したサブセット)
+     *
+     * URL of the CSS file (Subset fonts for frequently-used chars)
+     */
+    compactUrl?: string;
+    /**
      * モリサワ TypeSquare フォントか否か
      *
      * Whether this font is provided by Morisawa TypeSquare or not
@@ -535,6 +557,12 @@ export declare interface FontInfo {
      */
     google?: boolean;
     
+    /**
+     * フォントのグループ名
+     *
+     * Optional font group name
+     */
+    group?: string;
 }
 
 /**
@@ -626,6 +654,10 @@ declare function getPowOut(pow: number): (input: number) => number;
 
 declare class Graphic extends RenderingUnit {
     constructor(data: GraphicData);
+    /**
+     * @inheritDoc
+     */
+    animate: RenderingUnitFunction<Graphic>;
     getType(): number;
     toString(): string;
 }
@@ -767,10 +799,6 @@ export declare interface IChar extends ITextUnit {
     /**
      * @inheritDoc
      */
-    animate: RenderingUnitFunction<IChar>;
-    /**
-     * @inheritDoc
-     */
     readonly parent: IWord;
     /**
      * @inheritDoc
@@ -904,6 +932,12 @@ declare interface IEndpointManager extends EndpointData {
         protocol: string;
         domain: string;
         server: string;
+        appToken?: string;
+        authUser?: string;
+        authToken?: string;
+    };
+    client: {
+        version: string;
     };
 }
 
@@ -1025,10 +1059,6 @@ export declare interface IFontLoader {
  * @public
  */
 export declare interface IGraphic extends IRenderingUnit {
-    /**
-     * @inheritDoc
-     */
-    animate: RenderingUnitFunction<IGraphic>;
     /**
      * @inheritDoc
      */
@@ -1281,10 +1311,6 @@ export declare interface IMatrix2D {
  * @public
  */
 export declare interface IPhrase extends ITextUnit {
-    /**
-     * @inheritDoc
-     */
-    animate: RenderingUnitFunction<IPhrase>;
     /**
      * @inheritDoc
      */
@@ -1694,6 +1720,24 @@ export declare interface IPlayerApp {
      */
     readonly options: PlayerAppOptions;
     /**
+     * アプリの名前
+     *
+     * Name of this application
+     */
+    name?: string;
+    /**
+     * アプリ作者の名前
+     *
+     * Name of the author of this application
+     */
+    author?: string;
+    /**
+     * TextAlive API サーバの情報
+     *
+     * TextAlive server info
+     */
+    readonly server: PlayerAppServer;
+    /**
      * TextAlive のホストに接続されているか否か
      *
      * Whether this app is connected to the TextAlive host or not
@@ -1855,12 +1899,6 @@ export declare interface IPoint {
  * @public
  */
 export declare interface IRenderingUnit extends TimedObject {
-    /**
-     * このプロパティに関数が定義されているとき、 TextAlive の通常動作（割り当て済みテンプレートの `animate` 関数を呼ぶ）はスキップされ、この関数が呼ばれる
-     *
-     * When `animate` function is defined, TextAlive default behavior (call `animate` functions of all assigned template instances) is suppressed and this function is called instead
-     */
-    animate: RenderingUnitFunction<IRenderingUnit>;
     readonly parent: IRenderingUnit;
     readonly children: IRenderingUnit[];
     readonly previous: IRenderingUnit;
@@ -2159,10 +2197,7 @@ declare interface ITemplateLoader {
     list(options?: TemplateListRequest): Promise<TemplateListResponse>;
     load(templateId: number): Promise<TemplateEntry>;
     loadByName(templateName: string): Promise<TemplateEntry>;
-    loadForVideo(videoId: number, params?: {
-        withoutAuthors: boolean;
-        withScript: boolean;
-    }): Promise<TemplateList>;
+    loadForVideo(videoId: number, options?: TemplateListForVideoRequest): Promise<TemplateListResponse>;
 }
 
 declare type ITemplateManager = ITemplateLoader & ITemplateInfoManager;
@@ -2230,8 +2265,17 @@ declare interface IUserEventManager {
 
 declare type IUserManager = IUserTypeManager & IUserActionManager & IUserBrowserActionManager & IUserSpoofingManager & IUserEventManager;
 
+/**
+ * @deprecated Use {@link EndpointManager.textalive.authUser} and {@link EndpointManager.textalive.authToken} properties instead
+ */
 declare interface IUserSpoofingManager {
+    /**
+     * @deprecated Use {@link EndpointManager.textalive.authUser} and {@link EndpointManager.textalive.authToken} properties instead
+     */
     spoof(userProfile: UserProfile): void;
+    /**
+     * @deprecated Use {@link EndpointManager.textalive.authUser} and {@link EndpointManager.textalive.authToken} properties instead
+     */
     isSpoofingSongleUser(profile: UserProfile): boolean;
 }
 
@@ -2248,20 +2292,24 @@ declare interface IUserTypeManager {
  * @public
  */
 export declare interface IVideo extends TimedObject {
+    readonly credits: IPhrase[];
     readonly phrases: IPhrase[];
     readonly graphics: IGraphic[];
     
     duration: number;
     readonly startTime: number;
     readonly endTime: number;
+    readonly creditCount: number;
     readonly phraseCount: number;
     readonly graphicCount: number;
     readonly wordCount: number;
     readonly charCount: number;
+    readonly firstCredit: IPhrase;
     readonly firstPhrase: IPhrase;
     readonly firstWord: IWord;
     readonly firstChar: IChar;
     readonly firstGraphic: IGraphic;
+    readonly lastCredit: IPhrase;
     readonly lastPhrase: IPhrase;
     readonly lastWord: IWord;
     readonly lastChar: IChar;
@@ -2273,11 +2321,18 @@ export declare interface IVideo extends TimedObject {
      * @param time - 位置 / Position in this video
      */
     progress(time: number): number;
+    getCredit(index: number): IPhrase;
     getPhrase(index: number): IPhrase;
     getWord(index: number): IWord;
     getChar(index: number): IChar;
     getGraphic(index: number): IGraphic;
     findIndex(unit: IRenderingUnit): number;
+    /**
+     * Get phrase object (credits) in the current video
+     * @param time - position [ms]
+     * @param options - optional parameters for finding phrase
+     */
+    findCredit(time: number, options?: FindTimedObjectOptions): IPhrase;
     /**
      * Get phrase object in the current video
      * @param time - position [ms]
@@ -2305,6 +2360,7 @@ export declare interface IVideo extends TimedObject {
 }
 
 declare interface IVideoLoader {
+    list(options?: VideoListRequest): Promise<VideoListResponse>;
     load(videoId: number): Promise<VideoEntry>;
 }
 
@@ -2314,10 +2370,6 @@ declare type IVideoPlayer = IVideoLoader;
  * @public
  */
 export declare interface IWord extends ITextUnit {
-    /**
-     * @inheritDoc
-     */
-    animate: RenderingUnitFunction<IWord>;
     /**
      * @inheritDoc
      */
@@ -2366,6 +2418,18 @@ export declare interface IWord extends ITextUnit {
      * 言語（`en`: 英語、`ja`: 日本語）
      */
     readonly language: string;
+    /**
+     * カウントダウン（カウントダウンの場合は 0 以上の数値）
+     */
+    readonly countDown: number;
+    /**
+     * カウントアップ（カウントアップの場合は 0 以上の数値）
+     */
+    readonly countUp: number;
+    /**
+     * カウントダウン、カウントアップの初期値
+     */
+    readonly initialCount: number;
     readonly charCount: number;
     readonly firstChar: IChar;
     readonly lastChar: IChar;
@@ -2376,6 +2440,17 @@ export declare interface IWord extends ITextUnit {
  * @param t - Timing [0, 1]
  */
 declare function linear(t: number): number;
+
+declare interface ListRequest extends ListSimpleRequest {
+    lastId?: number;
+    startId?: number;
+    maxResults?: number;
+}
+
+declare interface ListResponse<T> extends ListSimpleResponse<T> {
+    nextStartId?: number;
+    nextLastId?: number;
+}
 
 declare interface ListSimpleRequest {
     lastIndex?: number;
@@ -2695,6 +2770,7 @@ export declare class Matrix2D implements IMatrix2D {
  * @public
  */
 export declare class NullGraphicsDriver implements GraphicsDriver {
+    private video;
     width: 1280;
     height: 720;
     wrapperTable: {};
@@ -2702,7 +2778,9 @@ export declare class NullGraphicsDriver implements GraphicsDriver {
     setCanvas(): Promise<void>;
     createRuntime(video: Video): Promise<RuntimeVideo>;
     reset(): void;
+    private resetTextUnitsFrom;
     update(): void;
+    private updateCharsFrom;
     updateStageTx(): void;
 }
 
@@ -2818,6 +2896,11 @@ export declare interface PartialVideoEntry {
 declare class Phrase extends TextUnit implements IPhrase {
     private _video;
     constructor(video: Video, data: PhraseData);
+    private createUnits;
+    /**
+     * @inheritDoc
+     */
+    animate: RenderingUnitFunction<Phrase>;
     get children(): Word[];
     get previous(): Phrase;
     get next(): Phrase;
@@ -3144,6 +3227,11 @@ export declare interface PlayerAppHost {
  */
 export declare interface PlayerAppListener {
     /**
+     * TextAlive App API サーバとの接続時に呼ばれる
+     * @param app - TextAlive App API サーバに関する情報 / TextAlive app API server info
+     */
+    onAppConnected?(app: IPlayerApp): void;
+    /**
      * TextAlive ホストとの接続時に呼ばれる
      *
      * Called when connection to a TextAlive host is established
@@ -3176,15 +3264,23 @@ export declare interface PlayerAppListener {
  */
 export declare interface PlayerAppOptions {
     /**
+     * アプリの開発者用トークン
+     *
+     * Application token
+     */
+    token: string;
+    /**
      * アプリの名前
      *
      * Name of this application
+     * @deprecated This value will be automatically retrieved from TextAlive API server.
      */
     appName?: string;
     /**
      * アプリ作者の名前
      *
      * Name of the author of this application
+     * @deprecated This value will be automatically retrieved from TextAlive API server.
      */
     appAuthor?: string;
     /**
@@ -3193,6 +3289,25 @@ export declare interface PlayerAppOptions {
      * List of parameters
      */
     parameters?: ParameterWidget[];
+}
+
+/**
+ * TextAlive App APIサーバに関する情報
+ * @public
+ */
+declare interface PlayerAppServer {
+    /**
+     * バージョン番号
+     */
+    version?: string;
+    /**
+     * メッセージ
+     */
+    message?: string;
+    /**
+     * エラーメッセージ
+     */
+    error?: string;
 }
 
 /**
@@ -3262,6 +3377,11 @@ declare class PlayerEventEmitter implements PlayerListener {
     onValenceArousalLoad(valenceArousal: ValenceArousal, reason?: Error): void;
     onLyricsLoad(lyrics: LyricsInfo, reason?: Error): void;
     onTextLoad(text: LyricsBody, reason?: Error): void;
+    /**
+     * Who emit this event? - PlayerApp.ts
+     * @param app
+     */
+    onAppConnected(app: IPlayerApp): void;
     /**
      * Who emit this event? - PlayerApp.ts
      * @param app
@@ -3545,7 +3665,7 @@ export declare interface PlayerOptions {
      *
      * TextAlive app options. When this property is set, the player parses query string to gain initial media information and tries communicating with the app host.
      */
-    app?: PlayerAppOptions | boolean;
+    app?: PlayerAppOptions;
     /**
      * TextAlive Player の音源の再生状態を管理する `Timer` インスタンスです。
      *
@@ -3761,9 +3881,11 @@ declare class RenderingUnit implements IRenderingUnit {
     
     
     /**
-     * @inheritDoc
+     * このプロパティに関数が定義されているとき、 TextAlive の通常動作（割り当て済みテンプレートの `animate` 関数を呼ぶ）はスキップされ、この関数が呼ばれる
+     *
+     * When `animate` function is defined, TextAlive default behavior (call `animate` functions of all assigned template instances) is suppressed and this function is called instead
      */
-    animate: RenderingUnitFunction<IRenderingUnit>;
+    animate: RenderingUnitFunction<RenderingUnit>;
     get video(): Video;
     get parent(): RenderingUnit;
     get children(): RenderingUnit[];
@@ -3780,16 +3902,6 @@ declare class RenderingUnit implements IRenderingUnit {
     overlaps(startTime: number, endTime: number): boolean;
     progress(time: number): number;
     
-    
-    
-    
-    
-    
-    
-    
-    
-    private moveBackward;
-    private moveForward;
     private moveWithChildren;
     
     
@@ -3848,6 +3960,10 @@ declare interface RuntimeRenderingUnit {
 
 declare interface RuntimeVideo {
     rendering: RenderingParameter;
+    addCredit(p: IPhrase): void;
+    removeCredit(p: IPhrase): void;
+    addPhrase(p: IPhrase): void;
+    removePhrase(p: IPhrase): void;
     addGraphic(g: IGraphic): void;
     removeGraphic(g: IGraphic): void;
 }
@@ -3860,6 +3976,18 @@ declare interface ServerStatus {
         core: "ready" | "maintenance";
         renderer: "ready" | "maintenance";
     };
+    app: {
+        success: boolean;
+        data: {
+            token: string;
+            name: string;
+            url: string;
+            author: string;
+            createdDate: string;
+        };
+        error?: string;
+        message?: string;
+    } | null;
 }
 
 /**
@@ -4764,18 +4892,7 @@ declare type SongVoice = [
     ],
     /** number of frames (10 [ms] per each frame) */ number
 ];
-
-/**
- * 二分探索
- *
- * Binary search
- * @param array - 順序付き配列 / Sorted array of objects
- * @param obj - 配列中のインデックスを探索するオブジェクト / Object to find an appropriate index
- * @param accessor - オブジェクトの数値表現を返す関数 / Accessor function that returns numeric representation of the object
- * @returns オブジェクトを挿入すべき位置のインデックス / An appropriate index value in the sorted array to insert the object
- * @public
- */
-export declare function sortedIndex<T>(array: T[], obj: T | number, accessor?: (obj: T) => number): number;
+export { sortedIndex }
 
 /**
  * 文字列をBase64エンコードしてデータURLとして取得する
@@ -4860,6 +4977,7 @@ declare class TemplateInterpreter implements ITemplateInterpreter {
     getProperty(instance: ITemplate, name: string): ParameterValue;
     exportInstance(instance: ITemplate): TemplateData;
     importInstances(video: IVideo, data: VideoData): boolean;
+    private importPhraseTemplates;
     private importTemplates;
     importInstance(data: TemplateData): ITemplate;
     private updateInstance;
@@ -4878,10 +4996,6 @@ declare class TemplateInterpreter implements ITemplateInterpreter {
     private onVideoReady;
 }
 
-declare interface TemplateList {
-    list: TemplateEntry[];
-}
-
 /**
  * テンプレートプログラミングに関するイベントのリスナ
  *
@@ -4894,12 +5008,17 @@ declare interface TemplateListener {
     
 }
 
-declare interface TemplateListRequest extends ListSimpleRequest {
-    maxResults?: number;
+declare interface TemplateListForVideoRequest extends ListRequest {
+    script?: boolean;
+    withoutAuthors?: boolean;
+}
+
+declare interface TemplateListRequest extends ListRequest {
     className?: string;
     script?: boolean;
     withoutAuthors?: boolean;
     withoutOriginalAuthors?: boolean;
+    templateType?: "text" | "graphic" | "utility";
 }
 
 declare type TemplateListResponse = ListSimpleResponse<TemplateEntry>;
@@ -4936,7 +5055,7 @@ declare class TextUnit extends RenderingUnit implements ITextUnit {
     /**
      * @inheritDoc
      */
-    animate: RenderingUnitFunction<ITextUnit>;
+    animate: RenderingUnitFunction<TextUnit>;
     get text(): string;
     get color(): Color;
     set color(val: Color);
@@ -5187,6 +5306,8 @@ export declare interface ValenceArousalValue {
 declare class Video implements IVideo {
     private data;
     
+    get credits(): Phrase[];
+    private _credits;
     get phrases(): Phrase[];
     private _phrases;
     get graphics(): Graphic[];
@@ -5196,10 +5317,13 @@ declare class Video implements IVideo {
     get duration(): number;
     get startTime(): number;
     get endTime(): number;
+    get creditCount(): number;
     get phraseCount(): number;
     get graphicCount(): number;
     get wordCount(): number;
     get charCount(): number;
+    get firstCredit(): Phrase;
+    get lastCredit(): Phrase;
     get firstPhrase(): Phrase;
     get lastPhrase(): Phrase;
     get firstWord(): Word;
@@ -5208,9 +5332,9 @@ declare class Video implements IVideo {
     get lastChar(): Char;
     get firstGraphic(): Graphic;
     get lastGraphic(): Graphic;
-    constructor(data: VideoData);
+    constructor(data?: VideoData);
     /**
-     * Create RenderingUnit objects
+     * create RenderingUnit objects
      */
     private createUnits;
     /**
@@ -5221,16 +5345,28 @@ declare class Video implements IVideo {
     private static exportUnitData;
     
     private static updateTemplateDataForUnits;
+    addCredit(phrase: Phrase): void;
+    private doAddCredit;
     addPhrase(phrase: Phrase): void;
+    private doAddPhrase;
     addGraphic(graphic: Graphic): void;
+    private doAddGraphic;
+    private addRenderingUnit;
+    removeCredit(phrase: Phrase): boolean;
+    removeCredits(): void;
+    removePhrase(phrase: Phrase): boolean;
+    removePhrases(): void;
     removeGraphic(graphic: Graphic): boolean;
     removeGraphics(): void;
-    private expandTime;
+    private removeRenderingUnit;
+    private updateStartAndEndTime;
     findIndex(unit: RenderingUnit): number;
+    getCredit(index: number): Phrase;
     getPhrase(index: number): Phrase;
     getWord(index: number): Word;
     getChar(index: number): Char;
     getGraphic(index: number): Graphic;
+    findCredit(time: number, options?: FindTimedObjectOptions): Phrase;
     findPhrase(time: number, options?: FindTimedObjectOptions): Phrase;
     findWord(time: number, options?: FindTimedObjectOptions): Word;
     findChar(time: number, options?: FindTimedObjectOptions): Char;
@@ -5247,6 +5383,7 @@ export declare interface VideoData {
     startTime?: number;
     endTime?: number;
     duration?: number;
+    credits?: PhraseData[];
     phrases?: PhraseData[];
     graphics?: GraphicData[];
     
@@ -5358,6 +5495,23 @@ declare interface VideoExportOptions {
     legacyStringMode?: boolean;
 }
 
+declare interface VideoListRequest extends ListRequest {
+    /**
+     * @deprecated Use {@link VideoListRequest.songCode} instead
+     */
+    songId?: number;
+    songCode?: string;
+    authorId?: number;
+    mine?: boolean;
+    sort?: "latest" | "popularity";
+    uniqueSource?: boolean;
+    uniqueAuthor?: boolean;
+    uniqueSong?: boolean;
+    template?: string;
+}
+
+declare type VideoListResponse = ListResponse<VideoEntry>;
+
 /**
  * @public
  */
@@ -5430,6 +5584,10 @@ declare class Voice extends SongMapElement implements IVoice {
 
 declare class Word extends TextUnit implements IWord {
     constructor(data: WordData);
+    /**
+     * @inheritDoc
+     */
+    animate: RenderingUnitFunction<Word>;
     get parent(): Phrase;
     get children(): Char[];
     get previous(): Word;
@@ -5439,6 +5597,9 @@ declare class Word extends TextUnit implements IWord {
     get pos(): string;
     get rawPos(): string;
     get language(): string;
+    get countDown(): number;
+    get countUp(): number;
+    get initialCount(): number;
     get charCount(): number;
     get firstChar(): Char;
     get lastChar(): Char;
@@ -5455,6 +5616,9 @@ export declare interface WordData extends UnitData {
     pos?: string;
     rawPoS?: string;
     language?: string;
+    countDown?: number;
+    countUp?: number;
+    initialCount?: number;
 }
 
 declare interface WordParsingResponse {

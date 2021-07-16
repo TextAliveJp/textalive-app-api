@@ -2,7 +2,7 @@
 
 TextAlive App API は、 **音楽に合わせてタイミングよく歌詞が動く Web アプリケーション（リリックアプリ）** を開発できる JavaScript 用のライブラリです。
 
-この API を使うと、Web 上の楽曲のサビやビートなどの楽曲地図情報を取得したり、Web 上の歌詞のタイミング情報を取得したりできるようになります。そして、一曲のために作り込んだ演出はもちろんのこと、 [TextAlive](https://textalive.jp/) に登録されている全ての楽曲に合わせて動作する演出をプログラミングできます。
+この API を使うと、Web 上の楽曲のサビやビートなどの楽曲地図情報を取得したり、Web 上の歌詞のタイミング情報を取得したりできるようになります。そして、一曲のために作り込んだ演出はもちろんのこと、 [TextAlive](https://textalive.jp/) に登録されている様々な楽曲に合わせて動作する演出をプログラミングできます。
 
 **English version available in [README.en.md](https://github.com/TextAliveJp/textalive-app-api/blob/master/README.en.md).**
 
@@ -14,7 +14,7 @@ TextAlive App API は、 **音楽に合わせてタイミングよく歌詞が�
 
 TextAlive App API は `script` タグで Web サイトに読み込んだり、 npm パッケージ `textalive-app-api` をインストールすることで使えるようになります。
 
-ほとんどの機能のエントリーポイントになる `Player` クラスの説明は [こちら](https://developer.textalive.jp/packages/textalive-app-api/classes/player.html) にあります。
+ほとんどの機能のエントリーポイントになる `Player` クラスの説明は [こちら](https://developer.textalive.jp/packages/textalive-app-api/classes/player.html) にあります。このクラスを利用するには [TextAlive for Developers Web サイト](https://developer.textalive.jp) から開発者登録を行い、アプリトークンを取得する必要があります。詳しくは Web サイトをご覧ください。
 
 ### `script` タグによる読み込み
 
@@ -44,4 +44,4 @@ npm install textalive-app-api
 
 ---
 
-&copy; AIST TextAlive Project 2020
+&copy; AIST TextAlive Project 2020-2021

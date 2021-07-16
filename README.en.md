@@ -4,7 +4,7 @@ TextAlive App API is the JavaScript API for developing **web applications that s
 
 This API allows the applications to retrieve music scene descriptions of a musical piece on the web, such as beat timings, repetitive segments, etc. It also allows retrieving lyrics information, such as lyrics text, timings of each character being vocalized, and morphological analysis results.
 
-The API decouples the applications from concrete musical pieces by introducing abstract data types of music scene descriptions and lyrics. The applications can synchronize to a specific musical piece and all the musical pieces registered to [TextAlive](https://textalive.jp).
+The API decouples the applications from concrete musical pieces by introducing abstract data types of music scene descriptions and lyrics. The applications can synchronize to the musical pieces registered to [TextAlive](https://textalive.jp).
 
 For the English overview of the TextAlive project, please refer to [the academic project page](https://junkato.jp/textalive/).
 
@@ -18,7 +18,7 @@ For the English overview of the TextAlive project, please refer to [the academic
 
 TextAlive App API can be used by `script` tags in an HTML document or by installing the npm package `textalive-app-api`.
 
-The primary entry point to the API features is the [`Player`](https://developer.textalive.jp/packages/textalive-app-api/classes/player.html) class. Please note that all of the API documents are bi-lingual -- written in both Japanese and English.
+The primary entry point to the API features is the [`Player`](https://developer.textalive.jp/packages/textalive-app-api/classes/player.html) class. To use it, you would need an application token that can be retrieved in the [TextAlive for Developers](https://developer.textalive.jp) website. Please note that all of the API documents are bi-lingual -- written in both Japanese and English.
 
 ### `script` tags
 
@@ -47,4 +47,4 @@ Please reach out to the developer team using [GitHub Issues](https://github.com/
 
 ---
 
-&copy; AIST TextAlive Project 2020
+&copy; AIST TextAlive Project 2020-2021
