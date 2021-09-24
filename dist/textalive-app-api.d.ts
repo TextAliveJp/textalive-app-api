@@ -36,7 +36,7 @@ declare interface AssetLicense {
  * @public
  */
 declare interface BackgroundGraphicsListener {
-    
+
 }
 
 declare interface BackgroundImageAsset extends Asset {
@@ -556,7 +556,7 @@ export declare interface FontInfo {
      * Whether this font is provided by Google Fonts or not
      */
     google?: boolean;
-    
+
     /**
      * フォントのグループ名
      *
@@ -913,7 +913,7 @@ export declare interface IDataLoader extends ISongExplorer {
     /** 歌詞の発声タイミング推定ID / Lyrics timing estimation ID */
     readonly lyricsId: number;
     /** 歌詞の発声タイミング情報 / Lyrics timing info */
-    readonly lyrics: LyricsDiffInfo;
+    readonly lyrics: LyricsInfo;
     /** 歌詞の情報 / Lyrics info */
     readonly lyricsBody: LyricsBody;
     /** 歌詞テキスト / Lyrics text */
@@ -1359,17 +1359,17 @@ export declare interface IPlayer {
      * Current video materials
      */
     readonly data: IDataLoader;
-    
+
     /**
      * 動画オブジェクト
      *
      * Current video object
      */
     readonly video: IVideo;
-    
-    
-    
-    
+
+
+
+
     /**
      * 音源メディアの配置先となるDOM要素
      *
@@ -1418,15 +1418,15 @@ export declare interface IPlayer {
      * @see {@link IPlayer.wait}
      */
     fps: number;
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
     /**
      * 動画（楽曲情報や歌詞など）が読み込み中か否か
      *
@@ -1439,7 +1439,7 @@ export declare interface IPlayer {
      * Whether the video is being played or not
      */
     readonly isPlaying: boolean;
-    
+
     /**
      * 動画シーク中か否か
      *
@@ -1485,8 +1485,8 @@ export declare interface IPlayer {
      * @returns 削除の成否 / Whether the listener was successfully removed or not
      */
     removeListener(listener: PlayerListener): boolean;
-    
-    
+
+
     /**
      * 楽曲URLに基づいて音楽地図などを読み込み、動画データを生成する
      *
@@ -1507,8 +1507,8 @@ export declare interface IPlayer {
      * @returns 動画オブジェクト / Video object
      */
     createFromSongPath(songPath: string, options?: PlayerVideoOptions): Promise<IVideo>;
-    
-    
+
+
     /**
      * テキストからダミーの音楽地図情報と動画データを生成する
      *
@@ -1527,7 +1527,7 @@ export declare interface IPlayer {
      * @returns 動画オブジェクト / Video object
      */
     createFromJSON(json: VideoData, options?: PlayerVideoOptions): Promise<IVideo>;
-    
+
     /**
      * 楽曲中のサビに関する情報を取得する
      *
@@ -1592,11 +1592,17 @@ export declare interface IPlayer {
      * @returns コード進行（見つからなければ `null`）
      */
     findChord(time: number, options?: PlayerFindOptions): IChord;
-    
+
     /**
      * 指定された位置の声量を取得する
      *
+     * - 取得するには、あらかじめプレイヤー初期化オプション {@link PlayerOptions.vocalAmplitudeEnabled} を `true` にセットしておく必要があります
+     * - 返値は 0 以上 {@link IPlayer.getMaxVocalAmplitude} で取得できる最大値以下の値
+     *
      * Get vocal amplitude at the specified timing
+     *
+     * - Constructor option {@link PlayerOptions.vocalAmplitudeEnabled} needs to be `true`
+     * - Return value ranges from 0 to the maximum value that can be retrieved by {@link IPlayer.getMaxVocalAmplitude}
      *
      * @see {@link IDataLoader.getVocalAmplitude}
      * @param time - 位置 [ms] / Position [ms]
@@ -1606,7 +1612,11 @@ export declare interface IPlayer {
     /**
      * 楽曲中の最大声量を取得する
      *
+     * - 取得するには、あらかじめプレイヤー初期化オプション {@link PlayerOptions.vocalAmplitudeEnabled} を `true` にセットしておく必要があります
+     *
      * Get maximum vocal amplitude
+     *
+     * - Constructor option {@link PlayerOptions.vocalAmplitudeEnabled} needs to be `true`
      *
      * @see {@link IDataLoader.getMaxVocalAmplitude}
      * @returns 最大声量
@@ -1615,7 +1625,11 @@ export declare interface IPlayer {
     /**
      * 指定された位置のV/A空間中の座標を取得する
      *
+     * - 取得するには、あらかじめプレイヤー初期化オプション {@link PlayerOptions.valenceArousalEnabled} を `true` にセットしておく必要があります
+     *
      * Get valence arousal value at the specified timing
+     *
+     * - Constructor option {@link PlayerOptions.valenceArousalEnabled} needs to be `true`
      *
      * @see {@link IDataLoader.getValenceArousal}
      * @param time - 位置 [ms] / Position [ms]
@@ -1625,13 +1639,17 @@ export declare interface IPlayer {
     /**
      * V/A空間中の座標遷移の中央値を取得する
      *
+     * - 取得するには、あらかじめプレイヤー初期化オプション {@link PlayerOptions.valenceArousalEnabled} を `true` にセットしておく必要があります
+     *
      * Get median valence arousal value throughout the song
+     *
+     * - Constructor option {@link PlayerOptions.valenceArousalEnabled} needs to be `true`
      *
      * @see {@link IDataLoader.getMedianValenceArousal}
      * @returns 座標値
      */
     getMedianValenceArousal(): ValenceArousalValue;
-    
+
     /**
      * 動画の再生位置を指定する
      *
@@ -1689,8 +1707,8 @@ export declare interface IPlayer {
      * - After calling this method, position updates by {@link Timer} trigger {@link PlayerEventListener.onTimeUpdate} again
      */
     endVideoSeek(): void;
-    
-    
+
+
     /**
      * 動画の現在のフレームを強制的に再描画する
      *
@@ -1724,13 +1742,19 @@ export declare interface IPlayerApp {
      *
      * Name of this application
      */
-    name?: string;
+    name: string;
     /**
      * アプリ作者の名前
      *
      * Name of the author of this application
      */
-    author?: string;
+    author: string;
+    /**
+     * アプリの状態
+     *
+     * Status of this application
+     */
+    status: number;
     /**
      * TextAlive API サーバの情報
      *
@@ -1905,10 +1929,10 @@ export declare interface IRenderingUnit extends TimedObject {
     readonly next: IRenderingUnit;
     /** 描画ユニットの長さ [ms] / Duration of this rendering unit [ms] */
     readonly duration: number;
-    
-    
-    
-    
+
+
+
+
     /**
      * 指定された楽曲中の位置をこの描画ユニット中の位置 `[0, 1]` にマッピングして返す
      *
@@ -1916,12 +1940,12 @@ export declare interface IRenderingUnit extends TimedObject {
      * @param time - 楽曲中の位置 / Position in a song
      */
     progress(time: number): number;
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
     /**
      * この描画ユニットの種類 / Type of this rendering unit
      * @see {@link UnitTypes}
@@ -2021,11 +2045,15 @@ declare interface ISongExplorer {
      * @returns コード進行（見つからなければ `null`）
      */
     findChord(time: number, options?: PlayerFindOptions): IChord;
-    
+
     /**
      * 指定された位置の声量を取得する
      *
      * Get vocal amplitude at the specified timing
+     *
+     * - このメソッドを使うには {@link Player} の初期化オプション（{@link PlayerOptions#vocalAmplitudeEnabled} を `true` にする必要があります
+     * - To use this method, {@link Player} constructor option {@link PlayerOptions#vocalAmplitudeEnabled} needs to be `true`
+     *
      * @param time - 位置 [ms] / Position [ms]
      * @returns 声量
      */
@@ -2034,6 +2062,10 @@ declare interface ISongExplorer {
      * 楽曲中の最大声量を取得する
      *
      * Get maximum vocal amplitude
+     *
+     * - このメソッドを使うには {@link Player} の初期化オプション（{@link PlayerOptions#vocalAmplitudeEnabled} を `true` にする必要があります
+     * - To use this method, {@link Player} constructor option {@link PlayerOptions#vocalAmplitudeEnabled} needs to be `true`
+     *
      * @returns 最大声量
      */
     getMaxVocalAmplitude(): number;
@@ -2041,14 +2073,23 @@ declare interface ISongExplorer {
      * 指定された位置のV/A空間中の座標を取得する
      *
      * Get valence arousal value at the specified timing
+     *
+     * - このメソッドを使うには {@link Player} の初期化オプション（{@link PlayerOptions#valenceArousalEnabled} を `true` にする必要があります
+     * - To use this method, {@link Player} constructor option {@link PlayerOptions#valenceArousalEnabled} needs to be `true`
+     *
      * @param time - 位置 [ms] / Position [ms]
      * @returns 座標値
+     * @see {@link PlayerOptions}
      */
     getValenceArousal(time: number): ValenceArousalValue;
     /**
      * V/A空間中の座標遷移の中央値を取得する
      *
      * Get median valence arousal value throughout the song
+     *
+     * - このメソッドを使うには {@link Player} の初期化オプション（{@link PlayerOptions#valenceArousalEnabled} を `true` にする必要があります
+     * - To use this method, {@link Player} constructor option {@link PlayerOptions#valenceArousalEnabled} needs to be `true`
+     *
      * @returns 座標値
      */
     getMedianValenceArousal(): ValenceArousalValue;
@@ -2098,7 +2139,7 @@ export declare interface ISongMap {
      * Repetitive segments
      */
     readonly segments: IRepetitiveSegments[];
-    
+
     /**
      * 音楽地図のリビジョンID
      */
@@ -2162,37 +2203,6 @@ declare interface ITemplateInfoManager {
     listContributors(className: string, templateId: number): Promise<UserEntry[]>;
 }
 
-declare interface ITemplateInterpreter {
-    verbose: boolean;
-    readonly ready: boolean;
-    readonly loaded: {
-        [s: string]: ITemplateClass;
-    };
-    getById(id: number): ITemplateClass;
-    getByName(className: string, ignoreVersion?: boolean): ITemplateClass;
-    loadById(id: number): Promise<ITemplateClass>;
-    loadByName(className: string): Promise<ITemplateClass>;
-    loadByNames(classNames: string[]): Promise<ITemplateClass[]>;
-    loadForVideo(videoId: number): Promise<ITemplateClass[]>;
-    register(model: TemplateEntry): Promise<ITemplateClass>;
-    createClass(script: string): ITemplateClass;
-    updateClassScript(oldClass: ITemplateClass, script: string): ITemplateClass;
-    commit(templateClass: ITemplateClass, log?: string): Promise<TemplateCreateResponse>;
-    exportInstance(instance: ITemplate): TemplateData;
-    importInstance(data: TemplateData): ITemplate;
-    importInstances(video: IVideo, data: VideoData): boolean;
-    newInstance(templateClass: ITemplateClass): ITemplate;
-    disposeInstance(instance: ITemplate): void;
-    disposeInstances(instances: ITemplate[] | IVideo): void;
-    setTemplate(unit: IRenderingUnit, template: ITemplate): void;
-    clearTemplate(unit: IRenderingUnit): void;
-    getRequiredTemplates(script: string): string[];
-    getRequiredTemplateAt(script: string, index: number): string;
-    exec(template: ITemplate, funcName: string, parameters: ParameterValue[]): any;
-    setProperty(instance: ITemplate, name: string, value: ParameterValue): void;
-    getProperty(instance: ITemplate, name: string): ParameterValue;
-}
-
 declare interface ITemplateLoader {
     list(options?: TemplateListRequest): Promise<TemplateListResponse>;
     load(templateId: number): Promise<TemplateEntry>;
@@ -2217,15 +2227,15 @@ export declare interface ITextUnit extends IRenderingUnit {
      * 文字ユニットに含まれるプレーンテキスト / Plain text contained in this text unit
      */
     readonly text: string;
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
 }
 
 declare interface IUserActionManager {
@@ -2237,7 +2247,7 @@ declare interface IUserActionManager {
     doGetToken(): Promise<string>;
     getMergingUsers(): Promise<UserEntry[]>;
     mergeUsers(): Promise<UserEntry>;
-    updateUser(entry: Partial<UserEntry>): Promise<UserEntry>;
+    updateUser(entry: UserUpdateRequest): Promise<UserEntry>;
     authenticate(userId: number, password: string): Promise<UserProfile>;
 }
 
@@ -2295,7 +2305,7 @@ export declare interface IVideo extends TimedObject {
     readonly credits: IPhrase[];
     readonly phrases: IPhrase[];
     readonly graphics: IGraphic[];
-    
+
     duration: number;
     readonly startTime: number;
     readonly endTime: number;
@@ -2515,7 +2525,7 @@ export declare interface LyricsBody {
 declare interface LyricsDiff {
     /** 歌詞発声タイミングの訂正ID / Lyrics diff ID */
     id: number;
-    
+
     /** 更新日時 / Updated date */
     updated_at: string;
 }
@@ -2566,8 +2576,8 @@ export declare interface LyricsInfo extends LyricsTimingInfo {
      * Songle analysis failure status
      */
     failed?: boolean;
-    
-    
+
+
 }
 
 /**
@@ -2583,9 +2593,9 @@ export declare interface LyricsTimingInfo {
      * Lyrics url
      */
     url: string;
-    
-    
-    
+
+
+
 }
 
 /**
@@ -2818,7 +2828,7 @@ export declare interface ParameterWidget {
      * Human-readable representation of this varible
      */
     title?: string | RegionalText;
-    
+
     /**
      * パラメタの種類（例: `Slider`）
      *
@@ -2833,8 +2843,8 @@ export declare interface ParameterWidget {
     params?: (boolean | number | string | [boolean | number | string, string?] | {
         [value: string]: string;
     })[];
-    
-    
+
+
     /**
      * パラメタの初期値
      *
@@ -2885,8 +2895,8 @@ export declare interface PartialVideoEntry {
      * サビなどの繰り返し区間のリビジョンID / Repetitive segment revision ID
      */
     repetitiveSegmentId?: number;
-    
-    
+
+
     /**
      * 動画の実データ / Video data
      */
@@ -2963,7 +2973,7 @@ export declare class Player implements IPlayer {
      */
     get data(): IDataLoader;
     private _data;
-    
+
     private _backgroundGraphics;
     /**
      * @inheritDoc
@@ -2971,15 +2981,15 @@ export declare class Player implements IPlayer {
     get video(): Video;
     private _video;
     private _videoPromise;
-    
+
     private _templates;
-    
+
     private _graphics;
-    
-    
+
+
     private _stageElement;
-    
-    
+
+
     /**
      * @inheritDoc
      */
@@ -3016,15 +3026,15 @@ export declare class Player implements IPlayer {
      */
     get fps(): number;
     set fps(val: number);
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
+
     /**
      * @inheritDoc
      */
@@ -3033,7 +3043,7 @@ export declare class Player implements IPlayer {
      * @inheritDoc
      */
     get isPlaying(): boolean;
-    
+
     /**
      * @inheritDoc
      */
@@ -3078,9 +3088,9 @@ export declare class Player implements IPlayer {
      * @inheritDoc
      */
     removeListener(listener: PlayerListener): boolean;
-    
+
     private doCreateFromVideoId;
-    
+
     private doCreateFromVideo;
     /**
      * @inheritDoc
@@ -3092,9 +3102,9 @@ export declare class Player implements IPlayer {
      */
     createFromSongPath(songPath: string, options?: PlayerVideoOptions): Promise<Video>;
     private doCreateFromSongPath;
-    
+
     private doCreateFromSongId;
-    
+
     private doCreateFromSongCode;
     /**
      * @inheritDoc
@@ -3109,7 +3119,7 @@ export declare class Player implements IPlayer {
     private create;
     private finalize;
     private updateMediaPosition;
-    
+
     /**
      * @inheritDoc
      */
@@ -3138,7 +3148,7 @@ export declare class Player implements IPlayer {
      * @inheritDoc
      */
     findChord(time: number, options?: PlayerFindOptions): IChord;
-    
+
     /**
      * @inheritDoc
      */
@@ -3155,9 +3165,9 @@ export declare class Player implements IPlayer {
      * @inheritDoc
      */
     getMedianValenceArousal(): ValenceArousalValue;
-    
-    
-    
+
+
+
     /**
      * @deprecated Use of {@link Player.setMediaElement} is deprecated - set value with {@link IPlayer.mediaElement} property instead.
      */
@@ -3195,8 +3205,8 @@ export declare class Player implements IPlayer {
      * @inheritDoc
      */
     endVideoSeek(): void;
-    
-    
+
+
     /**
      * @inheritDoc
      */
@@ -3229,8 +3239,9 @@ export declare interface PlayerAppListener {
     /**
      * TextAlive App API サーバとの接続時に呼ばれる
      * @param app - TextAlive App API サーバに関する情報 / TextAlive app API server info
+     * @param error - エラーメッセージ / Error message
      */
-    onAppConnected?(app: IPlayerApp): void;
+    onAppLoad?(app: IPlayerApp, error?: string): void;
     /**
      * TextAlive ホストとの接続時に呼ばれる
      *
@@ -3381,7 +3392,7 @@ declare class PlayerEventEmitter implements PlayerListener {
      * Who emit this event? - PlayerApp.ts
      * @param app
      */
-    onAppConnected(app: IPlayerApp): void;
+    onAppLoad(app: IPlayerApp): void;
     /**
      * Who emit this event? - PlayerApp.ts
      * @param app
@@ -3526,7 +3537,7 @@ export declare interface PlayerEventListener {
      * @param timer - Timer オブジェクト / Timer object
      */
     onTimerReady?(timer: Timer): void;
-    
+
     /**
      * 音源メディアの配置先となるDOM要素が変更されたときに呼ばれる
      *
@@ -3672,9 +3683,9 @@ export declare interface PlayerOptions {
      * A timer instance that controls the player status.
      */
     timer?: Timer;
-    
-    
-    
+
+
+
     /**
      * 音源メディアの配置先となるDOM要素; 音源を埋め込むコンテナとして利用されるDOM要素です。
      *
@@ -3687,7 +3698,7 @@ export declare interface PlayerOptions {
      * Banner position.
      */
     mediaBannerPosition?: PlayerBannerPosition;
-    
+
     /**
      * 時刻のアップデートイベントが発行されすぎるのを防ぐために使われるスロットリング機構の発行間隔です。
      *
@@ -3709,8 +3720,8 @@ export declare interface PlayerOptions {
      * @see {@link IFontLoader.listAvailableFonts}
      */
     fontFamilies?: (FontInfo | string)[];
-    
-    
+
+
     /**
      * 声量情報を取得するか否か
      *
@@ -3755,7 +3766,7 @@ export declare interface PlayerVideoOptions {
      * Video data
      */
     video?: PartialVideoEntry;
-    
+
     /**
      * 歌詞テキストの読み込み元
      *
@@ -3774,7 +3785,7 @@ export declare interface PlayerVideoOptions {
      * - When failed, the default method is used
      */
     lyricsDirectAccess?: boolean;
-    
+
 }
 
 /**
@@ -3873,13 +3884,13 @@ declare interface RenderingParameter {
 }
 
 declare class RenderingUnit implements IRenderingUnit {
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
     /**
      * このプロパティに関数が定義されているとき、 TextAlive の通常動作（割り当て済みテンプレートの `animate` 関数を呼ぶ）はスキップされ、この関数が呼ばれる
      *
@@ -3894,21 +3905,21 @@ declare class RenderingUnit implements IRenderingUnit {
     get startTime(): number;
     get endTime(): number;
     get duration(): number;
-    
-    
-    
-    
+
+
+
+
     contains(time: number): boolean;
     overlaps(startTime: number, endTime: number): boolean;
     progress(time: number): number;
-    
+
     private moveWithChildren;
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
     getType(): number;
     toString(): string;
 }
@@ -3979,9 +3990,9 @@ declare interface ServerStatus {
     app: {
         success: boolean;
         data: {
-            token: string;
             name: string;
             url: string;
+            status?: number;
             author: string;
             createdDate: string;
         };
@@ -4010,7 +4021,7 @@ declare function sineOut(t: number): number;
  * @public
  */
 export declare interface Song {
-    
+
     /**
      * 楽曲コード (ID)
      *
@@ -4023,8 +4034,8 @@ export declare interface Song {
      * Song title
      */
     name: string;
-    
-    
+
+
     /**
      * 楽曲の再生時間長 [s]
      *
@@ -4043,25 +4054,25 @@ export declare interface Song {
      * Permalink URL
      */
     permalink: string;
-    
-    
-    
-    
+
+
+
+
     /**
      * アーティスト情報
      *
      * Artist info
      */
     artist: {
-        
+
         /**
          * アーティスト名
          */
         name: string;
     };
-    
-    
-    
+
+
+
     /**
      * 作成日時
      *
@@ -4074,11 +4085,11 @@ export declare interface Song {
      * Updated date
      */
     updated_at: string;
-    
-    
-    
-    
-    
+
+
+
+
+
 }
 
 declare interface SongAnalysis {
@@ -4089,18 +4100,18 @@ declare interface SongAnalysis {
 }
 
 declare type SongBeat = [
-    /** startTime [s] */ number,
-    /** ? */ number,
-    /** length */ number,
-    /** position */ number,
-    /** ? */ number
+/** startTime [s] */ number,
+/** ? */ number,
+/** length */ number,
+/** position */ number,
+/** ? */ number
 ];
 
 declare type SongChord = [
-    /** startTime [s] */ number,
-    /** endTime [s] */ number,
-    /** name */ string,
-    /** ? */ any[]
+/** startTime [s] */ number,
+/** endTime [s] */ number,
+/** name */ string,
+/** ? */ any[]
 ];
 
 /**
@@ -4580,8 +4591,11 @@ export declare class SongleTimer implements Timer {
     private updateMediaPosition;
     private player;
     private _songlePlayer;
+    private ignoreSonglePlayerEvents;
     private stopping;
     wait: number;
+    positionFixAllowedDiff: number;
+    positionFixTimeout: number;
     constructor(options?: SongleTimerOptions);
     /**
      * Songleのプレイヤーインスタンスです。
@@ -4593,6 +4607,14 @@ export declare class SongleTimer implements Timer {
      * @inheritDoc
      */
     get isPlaying(): boolean;
+    /**
+     * Songle Sync の機能が有効化されているか否か
+     *
+     * Whether Songle Sync feature is enabled or not
+     *
+     * @see {@link https://api.songle.jp/sync}
+     */
+    get withSync(): boolean;
     /**
      * @inheritDoc
      */
@@ -4620,7 +4642,10 @@ export declare class SongleTimer implements Timer {
     seek(time: number): void;
     private handler;
     private lastPosition;
+    private lastSonglePosition;
     private lastTime;
+    private lastPlayTime;
+    private positionFix;
     private elapsedTimes;
     private startPolling;
     private stopPolling;
@@ -4660,8 +4685,8 @@ export declare interface SongleTimerOptions {
      * @see {@link https://api.songle.jp/sync}
      */
     secretToken?: string;
-    
-    
+
+
     /**
      * Songle APIのエントリーポイント
      * - `import Songle from "songle-api"` のようにして得られるオブジェクト
@@ -4772,7 +4797,7 @@ declare class SongMap implements ISongMap {
      * @inheritDoc
      */
     readonly segments: RepetitiveSegments[];
-    
+
     get revisions(): {
         chordId?: number;
         beatId?: number;
@@ -4869,14 +4894,14 @@ export declare interface SongStatus {
      * Repetitive segments
      */
     choruses: boolean;
-    
+
     /**
      * V/A空間の座標値
      *
      * Valence arousal data
      */
     av: boolean;
-    
+
     /**
      * 歌詞
      *
@@ -4886,12 +4911,13 @@ export declare interface SongStatus {
 }
 
 declare type SongVoice = [
-    [ /** current f0 */
-        number,
-        number
-    ],
-    /** number of frames (10 [ms] per each frame) */ number
+[ /** current f0 */
+number,
+number
+],
+/** number of frames (10 [ms] per each frame) */ number
 ];
+
 export { sortedIndex }
 
 /**
@@ -4948,6 +4974,7 @@ declare class TemplateInterpreter implements ITemplateInterpreter {
     private _verbose;
     get verbose(): boolean;
     set verbose(value: boolean);
+    ignoreVersion: boolean;
     rawConsole: boolean;
     private unsafeGlobalScope;
     get ready(): boolean;
@@ -4965,10 +4992,11 @@ declare class TemplateInterpreter implements ITemplateInterpreter {
     loadByName(templateName: string): Promise<ITemplateClass>;
     loadById(templateId: number): Promise<ITemplateClass>;
     commit(templateClass: ITemplateClass, log?: string): Promise<TemplateCreateResponse>;
-    register(model: TemplateEntry): Promise<ITemplateClass>;
+    register(modelOrClass: TemplateEntry | ITemplateClass): Promise<ITemplateClass>;
     updateClassScript(oldClass: ITemplateClass, script: string): ITemplateClass;
     registerClass(newClass: ITemplateClass): ITemplateClass;
     private updateClass;
+    private createModel;
     private updateInstances;
     createClass(script: string): ITemplateClass;
     private getGlobalProperties;
@@ -5003,9 +5031,9 @@ declare class TemplateInterpreter implements ITemplateInterpreter {
  * @public
  */
 declare interface TemplateListener {
-    
-    
-    
+
+
+
 }
 
 declare interface TemplateListForVideoRequest extends ListRequest {
@@ -5070,7 +5098,7 @@ declare class TextUnit extends RenderingUnit implements ITextUnit {
     get ascent(): number;
     get descent(): number;
     get height(): number;
-    
+
     toString(): string;
 }
 
@@ -5194,7 +5222,7 @@ export declare interface TimerInitOptions {
      * Event emitter
      */
     emitter: PlayerEventListener;
-    
+
 }
 
 /**
@@ -5203,7 +5231,7 @@ export declare interface TimerInitOptions {
 export declare interface UnitData {
     startTime?: number;
     endTime?: number;
-    
+
 }
 
 /**
@@ -5253,6 +5281,7 @@ declare interface UserEntry {
     songleAccessToken?: string;
     songleRefreshToken?: string;
     language?: string;
+    isDeveloper?: boolean;
     createdDate?: string;
     updatedDate?: string;
 }
@@ -5277,6 +5306,11 @@ declare interface UserProfile {
     };
 }
 
+declare interface UserUpdateRequest {
+    language?: string;
+    isDeveloper?: boolean;
+}
+
 declare interface ValenceArousalUnit extends ValenceArousalValue {
     /** Time */
     t: [number, number];
@@ -5285,34 +5319,40 @@ declare interface ValenceArousalUnit extends ValenceArousalValue {
 /**
  * V/A空間の座標値
  *
+ * - 感情価、覚醒度とも `[-1, 1]` の範囲に正規化された値
+ * - 曲内の相対的な変化 **ではなく** 曲間で比較可能な絶対値
+ *
  * Valence arousal data
+ *
+ * - Both valence and arousal values range from -1 to 1
+ * - The values do NOT represent relative changes within a song but absolute values comparable with values in other songs
  * @public
  */
 export declare interface ValenceArousalValue {
     /**
-     * 感情価
+     * 感情価 [-1, 1]
      *
-     * Valence
+     * Valence [-1, 1]
      */
     v: number;
     /**
-     * 覚醒度
+     * 覚醒度 [-1, 1]
      *
-     * Arousal
+     * Arousal [-1, 1]
      */
     a: number;
 }
 
 declare class Video implements IVideo {
     private data;
-    
+
     get credits(): Phrase[];
     private _credits;
     get phrases(): Phrase[];
     private _phrases;
     get graphics(): Graphic[];
     private _graphics;
-    
+
     set duration(duration: number);
     get duration(): number;
     get startTime(): number;
@@ -5343,7 +5383,7 @@ declare class Video implements IVideo {
     private organizeTimings;
     exportData(mgr: ITemplateInterpreter): VideoData;
     private static exportUnitData;
-    
+
     private static updateTemplateDataForUnits;
     addCredit(phrase: Phrase): void;
     private doAddCredit;
@@ -5386,7 +5426,7 @@ export declare interface VideoData {
     credits?: PhraseData[];
     phrases?: PhraseData[];
     graphics?: GraphicData[];
-    
+
 }
 
 /**
@@ -5416,7 +5456,7 @@ export declare interface VideoEntry {
      * 派生元（最古）動画ID / Original video ID (oldest)
      */
     sourceOriginId: number;
-    
+
     /**
      * 楽曲コード(ID) / Songle song code
      */
@@ -5449,13 +5489,13 @@ export declare interface VideoEntry {
      * 動画の更新履歴コメント / Video edit log
      */
     log: string;
-    
-    
+
+
     /**
      * 動画の実データ / Video data
      */
     json?: string | VideoData;
-    
+
     /**
      * 動画制作者の情報 / Video author info
      */
@@ -5468,7 +5508,7 @@ export declare interface VideoEntry {
      * 動画のアクセス数 / Access count
      */
     accessCount: number;
-    
+
     /**
      * プライベート動画か否か / Whether this video is private or not
      */
