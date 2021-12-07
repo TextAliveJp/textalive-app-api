@@ -938,6 +938,7 @@ declare interface IEndpointManager extends EndpointData {
     };
     client: {
         version: string;
+        axios?: any;
     };
 }
 
@@ -3496,6 +3497,11 @@ declare class PlayerEventEmitter implements PlayerListener {
     onSeek(position: number): void;
     /**
      * Who emit this event? - Timer.ts
+     * @param position
+     */
+    onSeekComplete(position: number): void;
+    /**
+     * Who emit this event? - Timer.ts
      */
     onStop(): void;
     /**
@@ -3624,6 +3630,13 @@ export declare interface PlayerEventListener {
      * @param position - 再生位置 [ms]
      */
     onSeek?(position: number): void;
+    /**
+     * 楽曲の再生位置変更が完了したときに呼ばれる
+     *
+     * Called when the media playback position is successfully updated after {@link onSeek}
+     * @param position - 再生位置 [ms]
+     */
+    onSeekComplete?(position: number): void;
     /**
      * プレイヤーが破棄されるときに呼ばれる
      *
@@ -4594,8 +4607,6 @@ export declare class SongleTimer implements Timer {
     private ignoreSonglePlayerEvents;
     private stopping;
     wait: number;
-    positionFixAllowedDiff: number;
-    positionFixTimeout: number;
     constructor(options?: SongleTimerOptions);
     /**
      * Songleのプレイヤーインスタンスです。
@@ -4623,6 +4634,7 @@ export declare class SongleTimer implements Timer {
      * @inheritDoc
      */
     initialize({ player, updater, emitter, altSourceUrl: altUrl }: TimerInitOptions): Promise<void>;
+    private resetProps;
     private initializeSonglePlayer;
     /**
      * @inheritDoc
@@ -4642,12 +4654,10 @@ export declare class SongleTimer implements Timer {
     seek(time: number): void;
     private handler;
     private lastPosition;
-    private lastSonglePosition;
     private lastTime;
-    private lastPlayTime;
-    private positionFix;
     private elapsedTimes;
     private startPolling;
+    private updateElapsedTimes;
     private stopPolling;
     /**
      * @inheritDoc
@@ -4908,6 +4918,7 @@ export declare interface SongStatus {
      * Lyrics
      */
     lyrics: boolean;
+
 }
 
 declare type SongVoice = [

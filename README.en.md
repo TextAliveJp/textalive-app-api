@@ -8,7 +8,7 @@ The API decouples the applications from concrete musical pieces by introducing a
 
 For the English overview of the TextAlive project, please refer to [the academic project page](https://junkato.jp/textalive/).
 
-**日本語は [README.md](https://github.com/TextAliveJp/textalive-app-api/blob/master/README.md) にあります。**
+**日本語は [README.md](https://github.com/TextAliveJp/textalive-app-api/blob/main/README.md) にあります。**
 
 [![npm version](https://img.shields.io/npm/v/textalive-app-api)](https://www.npmjs.com/package/textalive-app-api) [![Join the chat at https://gitter.im/textalive-app-api/community](https://badges.gitter.im/textalive-app-api/community.svg)](https://gitter.im/textalive-app-api/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
