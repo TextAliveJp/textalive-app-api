@@ -14,7 +14,7 @@ TextAlive App API は、 **音楽に合わせてタイミングよく歌詞が�
 
 TextAlive App API は `script` タグで Web サイトに読み込んだり、 npm パッケージ `textalive-app-api` をインストールすることで使えるようになります。
 
-ほとんどの機能のエントリーポイントになる `Player` クラスの説明は [こちら](https://developer.textalive.jp/packages/textalive-app-api/classes/player.html) にあります。このクラスを利用するには [TextAlive for Developers Web サイト](https://developer.textalive.jp) から開発者登録を行い、アプリトークンを取得する必要があります。詳しくは Web サイトをご覧ください。
+ほとんどの機能のエントリーポイントになる `Player` クラスの説明は [こちら](https://developer.textalive.jp/packages/textalive-app-api/classes/Player.html) にあります。このクラスを利用するには [TextAlive for Developers Web サイト](https://developer.textalive.jp) から開発者登録を行い、アプリトークンを取得する必要があります。詳しくは Web サイトをご覧ください。
 
 ### `script` タグによる読み込み
 
