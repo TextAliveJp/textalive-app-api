@@ -38,10 +38,11 @@ npm install textalive-app-api
 - [TextAlive App API チュートリアル](https://developer.textalive.jp/app)
 - [API リファレンス](https://developer.textalive.jp/packages/textalive-app-api)
 - [GitHub サンプルコード](https://github.com/TextAliveJp)
+- [TextAlive App API の開発履歴 (Scrapbox)](https://scrapbox.io/textalive/TextAlive_App_API%E3%81%AE%E9%96%8B%E7%99%BA%E5%B1%A5%E6%AD%B4)
 
 技術的に分からないことやバグ報告などがあれば、 [GitHub Issues](https://github.com/TextAliveJp/textalive-app-api/issues?q=is%3Aissue) か [Gitter Chat](https://gitter.im/textalive-app-api/community) までお願いいたします。
 [TextAlive for Developers トップページ](https://developer.textalive.jp) もぜひご覧ください。
 
 ---
 
-&copy; AIST TextAlive Project 2020-2021
+&copy; AIST TextAlive Project 2020-2024

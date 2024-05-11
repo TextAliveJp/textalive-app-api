@@ -1,8 +1,14 @@
 {
   "name": "textalive-app-api",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
+  "exports": {
+    "import": "./dist/index.es.js",
+    "require": "./dist/index.js",
+    "types": "./dist/textalive-app-api.d.ts"
+  },
+  "type": "module",
   "types": "dist/textalive-app-api.d.ts",
   "repository": {
     "type": "git",
@@ -22,7 +28,7 @@
   },
   "devDependencies": {},
   "dependencies": {
-    "axios": "^0.23.0",
+    "axios": "^1.6.8",
     "webfontloader": "^1.6.28"
   },
   "optionalDependencies": {

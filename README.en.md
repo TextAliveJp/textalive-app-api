@@ -18,7 +18,7 @@ For the English overview of the TextAlive project, please refer to [the academic
 
 TextAlive App API can be used by `script` tags in an HTML document or by installing the npm package `textalive-app-api`.
 
-The primary entry point to the API features is the [`Player`](https://developer.textalive.jp/packages/textalive-app-api/classes/player.html) class. To use it, you would need an application token that can be retrieved in the [TextAlive for Developers](https://developer.textalive.jp) website. Please note that all of the API documents are bi-lingual -- written in both Japanese and English.
+The primary entry point to the API features is the [`Player`](https://developer.textalive.jp/packages/textalive-app-api/classes/Player.html) class. To use it, you would need an application token that can be retrieved in the [TextAlive for Developers](https://developer.textalive.jp) website. Please note that all of the API documents are bi-lingual -- written in both Japanese and English.
 
 ### `script` tags
 
@@ -47,4 +47,4 @@ Please reach out to the developer team using [GitHub Issues](https://github.com/
 
 ---
 
-&copy; AIST TextAlive Project 2020-2021
+&copy; AIST TextAlive Project 2020-2024
