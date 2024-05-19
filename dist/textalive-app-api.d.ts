@@ -3565,7 +3565,7 @@ export declare interface TimedObjectsInRange<T extends TimedObject> {
   entered: T[];
   /** 指定区間内で終了したオブジェクト / Timed objects that ended within the specified time range */
   left: T[];
-  /** 指定区間の直前にあるオブジェクト / The last timed object before the specified time range */
+  /** 指定区間の直後にあるオブジェクト / The last timed object before the specified time range */
   previous: T | null;
   /** 指定区間の直前にあるオブジェクト / The first timed object after the specified time range */
   next: T | null;
