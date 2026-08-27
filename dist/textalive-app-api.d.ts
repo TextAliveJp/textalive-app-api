@@ -1,5 +1,3 @@
-import { sortedIndex } from "sortedindex";
-
 /**
  * **Basic timer**
  *
@@ -21,6 +19,9 @@ export declare class BasicTimer implements Timer {
   /** @inheritDoc */
   get isPlaying(): boolean;
   /** @inheritDoc */
+  get volume(): number;
+  set volume(value: number);
+  /** @inheritDoc */
   get position(): number;
   constructor();
   /** @inheritDoc */
@@ -35,27 +36,6 @@ export declare class BasicTimer implements Timer {
   seek(time: number): void;
   /** @inheritDoc */
   dispose(): void;
-}
-
-/**
- * ビート情報 / Beat info
- */
-declare class Beat extends SongMapElement implements IBeat {
-  /** @inheritDoc */
-  startTime: number;
-  /** @inheritDoc */
-  get endTime(): number;
-  /** @inheritDoc */
-  length: number;
-  /** @inheritDoc */
-  position: number;
-  /** @inheritDoc */
-  previous: Beat;
-  /** @inheritDoc */
-  next: Beat;
-  /** @inheritDoc */
-  index: number;
-  constructor();
 }
 
 /**
@@ -82,8 +62,8 @@ declare class Char extends TextUnit implements IChar {
   get parent(): Word;
   get previous(): Char;
   get next(): Char;
+  get children(): RenderingUnit[];
   get text(): string;
-
   set font(val: Font);
   get font(): Font;
   set fontFamily(val: string);
@@ -102,25 +82,6 @@ declare class Char extends TextUnit implements IChar {
  */
 export declare interface CharData extends UnitData, FontData {
   char?: string;
-}
-
-/**
- * コード進行の情報 / Chord info
- */
-declare class Chord extends SongMapElement implements IChord {
-  /** @inheritDoc */
-  startTime: number;
-  /** @inheritDoc */
-  endTime: number;
-  /** @inheritDoc */
-  name: string;
-  /** @inheritDoc */
-  previous: Chord;
-  /** @inheritDoc */
-  next: Chord;
-  /** @inheritDoc */
-  index: number;
-  constructor();
 }
 
 /**
@@ -205,8 +166,7 @@ declare interface ColorData {
  * Event listener for data loading procedures
  * @public
  */
-export declare type DataLoaderListener = VideoLoaderListener &
-  SongLoaderListener &
+export declare type DataLoaderListener = SongLoaderListener &
   TextLoaderListener &
   FontLoaderListener;
 
@@ -219,6 +179,9 @@ export declare type DataLoaderListener = VideoLoaderListener &
  */
 export declare function dataUrlToString(url: string): string;
 
+/**
+ * @public
+ */
 export declare interface DecomposedProps {
   x?: number;
   y?: number;
@@ -318,7 +281,7 @@ export declare class Ease {
 export declare function findTimedObject<T extends TimedObject>(
   objects: T[],
   time: number,
-  options?: FindTimedObjectOptions
+  options?: FindTimedObjectOptions,
 ): T;
 
 /**
@@ -355,9 +318,12 @@ export declare type FindTimedObjectOptions =
 export declare function findTimedObjectsInRange<T extends TimedObject>(
   sortedArray: T[],
   startTime: number,
-  endTime: number
+  endTime: number,
 ): TimedObjectsInRange<T>;
 
+/**
+ * @public
+ */
 declare class Font implements IFont {
   constructor(family?: string, size?: number, style?: string);
   get family(): string;
@@ -418,18 +384,15 @@ export declare interface FontInfo {
    */
   compactUrl?: string;
   /**
-   * モリサワ TypeSquare フォントか否か
-   *
-   * Whether this font is provided by Morisawa TypeSquare or not
+   * プライベートフォントか否か
    */
-  typesquare?: boolean;
+  isPrivate?: boolean;
   /**
    * Google Fonts フォントか否か
    *
    * Whether this font is provided by Google Fonts or not
    */
   google?: boolean;
-
   /**
    * フォントのグループ名
    *
@@ -493,7 +456,7 @@ declare function getBackOut(amount: number): (input: number) => number;
  */
 declare function getElasticIn(
   amplitude: number,
-  period: number
+  period: number,
 ): (input: number) => number;
 
 /**
@@ -503,7 +466,7 @@ declare function getElasticIn(
  */
 declare function getElasticInOut(
   amplitude: number,
-  period: number
+  period: number,
 ): (input: number) => number;
 
 /**
@@ -513,7 +476,7 @@ declare function getElasticInOut(
  */
 declare function getElasticOut(
   amplitude: number,
-  period: number
+  period: number,
 ): (input: number) => number;
 
 /**
@@ -533,6 +496,43 @@ declare function getPowInOut(pow: number): (input: number) => number;
  * @param pow - The exponent to use (ex. 3 would return a cubic ease).
  */
 declare function getPowOut(pow: number): (input: number) => number;
+
+export declare class HTMLAudioTimer implements Timer {
+  private options;
+  private emitter;
+  private updateMediaPosition;
+  private player;
+  private audioElement;
+  private handler;
+  wait: number;
+  get isPlaying(): boolean;
+  get position(): number;
+  get volume(): number;
+  set volume(value: number);
+  constructor(options?: HTMLAudioTimerOptions);
+  initialize({
+    player,
+    updater,
+    emitter,
+    altSourceUrl: altUrl,
+  }: TimerInitOptions): Promise<void>;
+  private setupEventListeners;
+  private waitForMetadata;
+  private updateVideoDuration;
+  private startPolling;
+  private stopPolling;
+  play(): void;
+  pause(): void;
+  stop(): void;
+  seek(time: number): void;
+  dispose(): void;
+}
+
+export declare interface HTMLAudioTimerOptions {
+  altSourceUrls?: {
+    [url: string]: string;
+  };
+}
 
 /**
  * ビート情報 / Beat info
@@ -671,10 +671,8 @@ export declare interface IColor {
 export declare interface IDataLoader extends ISongExplorer {
   /** TextAlive サービスのURL / TextAlive website url */
   readonly permalink: string;
-
   /** 楽曲情報 / Song info */
   readonly song: Song;
-
   /** 音楽地図情報 / Song map info */
   readonly songMap: ISongMap;
   /**
@@ -693,6 +691,19 @@ export declare interface IDataLoader extends ISongExplorer {
   readonly text: string;
   /** フォントの読み込みステータス / Font loading status */
   readonly fonts: IFontLoader;
+  /**
+   * 現在読み込まれているデータを {@link JsonDataEntry} としてエキスポートする
+   *
+   * Export the currently loaded data as a {@link JsonDataEntry} object.
+   * Returns `null` when no video / song data has been loaded yet.
+   *
+   * The returned entry can be serialised to JSON and later fed to
+   * `createManagers` from the `textalive-data-json` package to reproduce the
+   * same playback without hitting the Songle / TextAlive API servers.
+   *
+   * @returns The current data as a {@link JsonDataEntry}, or `null`.
+   */
+  exportJsonDataEntry(): JsonDataEntry | null;
 }
 
 /**
@@ -751,6 +762,10 @@ export declare interface IFont {
  * @public
  */
 export declare interface IFontLoader {
+  /**
+   * プライベートフォントを対象に含めるかどうか / Whether private fonts are included
+   */
+  isPrivateFontEnabled: boolean;
   /**
    * 読み込みに失敗したフォントの一覧 / List of fonts failed to load
    */
@@ -825,7 +840,7 @@ export declare interface IMatrix2D {
     c: number,
     d: number,
     tx: number,
-    ty: number
+    ty: number,
   ): IMatrix2D;
   /**
    * Appends the specified matrix to this matrix.
@@ -862,7 +877,7 @@ export declare interface IMatrix2D {
     skewX: number,
     skewY: number,
     regX?: number,
-    regY?: number
+    regY?: number,
   ): IMatrix2D;
   /**
    * Returns a clone of the Matrix2D instance.
@@ -920,7 +935,7 @@ export declare interface IMatrix2D {
     c: number,
     d: number,
     tx: number,
-    ty: number
+    ty: number,
   ): IMatrix2D;
   /**
    * Prepends the specified matrix to this matrix.
@@ -971,7 +986,7 @@ export declare interface IMatrix2D {
     skewX: number,
     skewY: number,
     regX?: number,
-    regY?: number
+    regY?: number,
   ): IMatrix2D;
   /**
    * Applies a clockwise rotation transformation to the matrix.
@@ -1002,7 +1017,7 @@ export declare interface IMatrix2D {
     c?: number,
     d?: number,
     tx?: number,
-    ty?: number
+    ty?: number,
   ): IMatrix2D;
   /**
    * Applies a skew transformation to the matrix.
@@ -1080,14 +1095,12 @@ export declare interface IPlayer {
    * Current song map and other information related to the musical piece
    */
   readonly data: IDataLoader;
-
   /**
    * 動画オブジェクト
    *
    * Current video object
    */
   readonly video: IVideo;
-
   /**
    * 音源メディアの配置先となるDOM要素
    *
@@ -1136,7 +1149,6 @@ export declare interface IPlayer {
    * @see {@link IPlayer.wait}
    */
   fps: number;
-
   /**
    * 動画（楽曲情報や歌詞など）が読み込み中か否か
    *
@@ -1149,7 +1161,6 @@ export declare interface IPlayer {
    * Whether the video is being played or not
    */
   readonly isPlaying: boolean;
-
   /**
    * 動画シーク中か否か
    *
@@ -1195,11 +1206,11 @@ export declare interface IPlayer {
    * @returns 削除の成否 / Whether the listener was successfully removed or not
    */
   removeListener(listener: PlayerListener): boolean;
-
   /**
-   * 楽曲URLに基づいて音楽地図などを読み込み、動画データを生成する
+   * 楽曲URLをTextAlive APIでカードデータへ解決し、音楽地図などを読み込んで動画データを生成する
    *
-   * Generate video data from song URL
+   * Resolve a song URL through the TextAlive API and generate video data.
+   * Unsupported public URLs fall back to the direct provider path.
    *
    * @param songUrl - 楽曲URL / Song URL
    * @param options - オプション / Optional data to build the video object
@@ -1207,7 +1218,31 @@ export declare interface IPlayer {
    */
   createFromSongUrl(
     songUrl: string,
-    options?: PlayerVideoOptions
+    options?: PlayerVideoOptions,
+  ): Promise<IVideo>;
+  /**
+   * 解決済みのカードデータから動画データを生成する
+   *
+   * Generate video data from resolved card data represented as JsonDataEntry.
+   *
+   * @param entry - 解決済みカードデータ / Resolved card data
+   * @param options - オプション / Optional data to build the video object
+   */
+  createFromCardData(
+    entry: JsonDataEntry,
+    options?: PlayerVideoOptions,
+  ): Promise<IVideo>;
+  /**
+   * カードURLから解決済みデータを取得して動画データを生成する
+   *
+   * Fetch resolved card data from a URL and generate video data.
+   *
+   * @param cardUrl - JsonDataEntryを返すカードURL / Card URL returning JsonDataEntry
+   * @param options - オプション / Optional data to build the video object
+   */
+  createFromCardUrl(
+    cardUrl: string,
+    options?: PlayerVideoOptions,
   ): Promise<IVideo>;
   /**
    * 楽曲パス（URLから `http://` などのプロトコル部分を除いたもの）に基づいて音楽地図などを読み込み、動画データを生成する
@@ -1220,9 +1255,8 @@ export declare interface IPlayer {
    */
   createFromSongPath(
     songPath: string,
-    options?: PlayerVideoOptions
+    options?: PlayerVideoOptions,
   ): Promise<IVideo>;
-
   /**
    * テキストからダミーの音楽地図情報と動画データを生成する
    *
@@ -1242,9 +1276,20 @@ export declare interface IPlayer {
    */
   createFromJSON(
     json: VideoData,
-    options?: PlayerVideoOptions
+    options?: PlayerVideoOptions,
   ): Promise<IVideo>;
-
+  /**
+   * 現在読み込まれているデータを {@link JsonDataEntry} としてエキスポートする
+   *
+   * Export the currently loaded data (song, analysis, lyrics) as a
+   * {@link JsonDataEntry} object that can be serialised to JSON and later
+   * supplied to {@link IPlayer.createFromCardData}.
+   * Returns `null` when no video / song data has been loaded yet.
+   *
+   * @see {@link IDataLoader.exportJsonDataEntry}
+   * @returns The current data as a {@link JsonDataEntry}, or `null`.
+   */
+  exportJsonDataEntry(): JsonDataEntry | null;
   /**
    * 楽曲中のサビに関する情報を取得する
    *
@@ -1281,7 +1326,7 @@ export declare interface IPlayer {
    */
   findChorusChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IRepetitiveSegment>;
   /**
    * 楽曲中のビートに関する情報を取得する
@@ -1315,7 +1360,7 @@ export declare interface IPlayer {
    */
   findBeatChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IBeat>;
   /**
    * 楽曲中のコード進行に関する情報を取得する
@@ -1349,9 +1394,8 @@ export declare interface IPlayer {
    */
   findChordChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IChord>;
-
   /**
    * 指定された位置の声量を取得する
    *
@@ -1408,7 +1452,6 @@ export declare interface IPlayer {
    * @returns 座標値
    */
   getMedianValenceArousal(): ValenceArousalValue;
-
   /**
    * 動画の再生位置を指定する
    *
@@ -1466,7 +1509,6 @@ export declare interface IPlayer {
    * - After calling this method, position updates by {@link Timer} trigger {@link PlayerEventListener.onTimeUpdate} again
    */
   endVideoSeek(): void;
-
   /**
    * 動画の現在のフレームを強制的に再描画する
    *
@@ -1543,6 +1585,12 @@ export declare interface IPlayerApp {
    * - When the app is connected to a host, the host might overwrite the song URL, resulting in the {@link PlayerAppListener.onAppMediaChange} event.
    */
   readonly songUrl: string;
+  /**
+   * クエリパラメタまたはTextAliveホストにより指定されているカードURL
+   *
+   * Card URL specified by the query parameter or TextAlive host.
+   */
+  readonly cardUrl: string;
   /**
    * クエリパラメタまたはTextAliveホストにより指定されている楽曲データの読み込みオプション
    *
@@ -1669,7 +1717,6 @@ export declare interface IRenderingUnit extends TimedObject {
   readonly next: IRenderingUnit;
   /** 描画ユニットの長さ [ms] / Duration of this rendering unit [ms] */
   readonly duration: number;
-
   /**
    * このプロパティに関数が定義されているとき、 TextAlive の通常動作（割り当て済みテンプレートの `animate` 関数を呼ぶ）はスキップされ、この関数が呼ばれる
    *
@@ -1683,7 +1730,6 @@ export declare interface IRenderingUnit extends TimedObject {
    * @param time - 楽曲中の位置 / Position in a song
    */
   progress(time: number): number;
-
   /**
    * この描画ユニットの種類 / Type of this rendering unit
    * @see {@link UnitTypes}
@@ -1768,7 +1814,7 @@ declare interface ISongExplorer {
    */
   findChorusChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IRepetitiveSegment>;
   /**
    * 楽曲中のビートに関する情報を取得する
@@ -1797,7 +1843,7 @@ declare interface ISongExplorer {
    */
   findBeatChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IBeat>;
   /**
    * 楽曲中のコード進行に関する情報を取得する
@@ -1826,9 +1872,8 @@ declare interface ISongExplorer {
    */
   findChordChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IChord>;
-
   /**
    * 指定された位置の声量を取得する
    *
@@ -1906,7 +1951,6 @@ export declare interface ISongMap {
    * Repetitive segments
    */
   readonly segments: IRepetitiveSegments[];
-
   /**
    * 音楽地図のリビジョンID
    */
@@ -1935,12 +1979,6 @@ export declare interface ISongMap {
  */
 export declare function isStringEncodedDataUrl(url: string): boolean;
 
-declare interface ITemplateClass {
-  className: string;
-  id: number;
-  script: string;
-}
-
 /**
  * 文字ユニット / Text unit
  * @public
@@ -1962,24 +2000,18 @@ export declare interface IVideo extends TimedObject {
   readonly phrases: IPhrase[];
   readonly words: IWord[];
   readonly chars: IChar[];
-
   duration: number;
   readonly startTime: number;
   readonly endTime: number;
-
   readonly phraseCount: number;
-
   readonly wordCount: number;
   readonly charCount: number;
-
   readonly firstPhrase: IPhrase;
   readonly firstWord: IWord;
   readonly firstChar: IChar;
-
   readonly lastPhrase: IPhrase;
   readonly lastWord: IWord;
   readonly lastChar: IChar;
-
   /**
    * 指定された位置を `[0, 1]` にマッピングして返す
    *
@@ -1987,7 +2019,6 @@ export declare interface IVideo extends TimedObject {
    * @param time - 位置 / Position in this video
    */
   progress(time: number): number;
-
   /**
    * 指定したインデックスのフレーズを取得する / Get phrase with the specified index
    * @param index フレーズのインデックス / Phrase index
@@ -2003,14 +2034,12 @@ export declare interface IVideo extends TimedObject {
    * @param index 文字のインデックス / Phrase index
    */
   getChar(index: number): IChar;
-
   /**
    * 指定した描画オブジェクトのインデックスを取得する / Get index of the specified rendering unit
    * @param unit 描画オブジェクト / Rendering unit
    * @returns インデックス / Index
    */
   findIndex(unit: IRenderingUnit): number;
-
   /**
    * 指定した再生位置のフレーズを取得する / Get phrase object in the current video
    * @param time - position [ms]
@@ -2024,7 +2053,7 @@ export declare interface IVideo extends TimedObject {
    */
   findPhraseChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IPhrase>;
   /**
    * 指定した再生位置の単語を取得する / Get word object in the current video
@@ -2039,7 +2068,7 @@ export declare interface IVideo extends TimedObject {
    */
   findWordChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IWord>;
   /**
    * 指定した再生位置の文字を取得する / Get character object in the current video
@@ -2054,7 +2083,7 @@ export declare interface IVideo extends TimedObject {
    */
   findCharChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IChar>;
 }
 
@@ -2103,11 +2132,267 @@ export declare interface IWord extends ITextUnit {
    * 言語（`en`: 英語、`ja`: 日本語）
    */
   readonly language: string;
-
   readonly charCount: number;
   readonly firstChar: IChar;
   readonly lastChar: IChar;
   findIndex(unit: IChar): number;
+}
+
+/**
+ * Human-friendly song analysis data.
+ *
+ * This type replaces the internal `SongInfo.analysis` ({@link SongAnalysis})
+ * for use in JSON data entries.  Times are in milliseconds, properties use
+ * camelCase, and the opaque tuple types are replaced with plain objects.
+ * @public
+ */
+declare interface JsonAnalysis {
+  /** Beat information */
+  beats?: JsonBeat[];
+  /** Chord information */
+  chords?: JsonChord[];
+  /**
+   * Repetitive segment information (chorus/hook occurrences).
+   * Each entry represents one distinct occurrence.
+   */
+  segments?: JsonSegment[];
+}
+
+/**
+ * Human-friendly representation of one beat in a song.
+ * All times are in milliseconds.
+ * @public
+ */
+declare interface JsonBeat {
+  /** Beat start time in milliseconds */
+  startTime: number;
+  /** Beat length in the same unit as the underlying Songle beat data (number of subdivisions per beat, not milliseconds) */
+  length: number;
+  /** Beat position within the measure (1-based) */
+  position: number;
+}
+
+/**
+ * Human-friendly representation of one chord in a song.
+ * All times are in milliseconds.
+ * @public
+ */
+declare interface JsonChord {
+  /** Chord start time in milliseconds */
+  startTime: number;
+  /** Chord end time in milliseconds */
+  endTime: number;
+  /** Chord name (e.g. "C", "Am", "G7") */
+  name: string;
+}
+
+/**
+ * A single entry in the JSON data store, holding all data needed to render
+ * one song/video. Multiple entries can be combined into an array to form a
+ * database of several songs.
+ *
+ * Every field is optional so a minimal entry can contain just the data
+ * relevant for a specific use-case (e.g. only lyrics data for a single
+ * video, without valence/arousal information).
+ * @public
+ */
+export declare interface JsonDataEntry {
+  /**
+   * Song metadata.
+   * Used by {@link ISongPlayer.load}.
+   */
+  song?: JsonSongData;
+  /**
+   * Song analysis data (beats, chords, repetitive segments).
+   * Used by {@link ISongPlayer.loadInfo} and
+   * {@link ISongPlayer.loadDetailInfo}.
+   */
+  analysis?: JsonAnalysis;
+  /**
+   * Per-frame vocal amplitude values.
+   * Used by {@link ISongPlayer.loadVocalAmplitude}.
+   */
+  vocalAmplitude?: VocalAmplitude;
+  /**
+   * Valence/arousal model data.
+   * Used by {@link ISongPlayer.loadValenceArousal}.
+   */
+  valenceArousal?: ValenceArousal;
+  /**
+   * Unified lyrics data combining vocalization timing, character text, and
+   * optional part-of-speech (PoS) tags.
+   *
+   * Fully embedded lyrics bypass the normal multi-step loading pipeline.
+   * Timing-only lyrics retain the card's timing while loading and parsing the
+   * text from their source URL without querying Songle.
+   */
+  lyrics?: JsonLyricsData | JsonLyricsTimingData;
+}
+
+/**
+ * Per-character lyrics data including vocalization timing and the character
+ * text itself.
+ * @public
+ */
+declare interface JsonLyricsChar {
+  /** Vocalization start time in milliseconds */
+  startTime: number;
+  /** Vocalization end time in milliseconds */
+  endTime: number;
+  /** The lyrics character */
+  char: string;
+}
+
+/**
+ * Unified lyrics representation combining vocalization timing, character text,
+ * and optional part-of-speech (PoS) data.
+ *
+ * This compact format replaces the separate `SongleLyrics`, `LyricsInfo`,
+ * `LyricsDiffInfo`, and `LyricsBody` types for scenarios where all lyrics
+ * data is pre-built (e.g., loaded from a local JSON file) and the multi-step
+ * web loading pipeline can be bypassed.
+ *
+ * When `pos` is populated on words, the `attachPoSTags` step in the Player
+ * rendering pipeline is automatically skipped.
+ * @public
+ */
+declare interface JsonLyricsData {
+  /**
+   * Artist info
+   */
+  artist?: {
+    name: string;
+    url?: string;
+  };
+  /**
+   * Song title
+   */
+  name?: string;
+  /**
+   * Source URL
+   */
+  url?: string;
+  /**
+   * Phrase → Word structure with per-character timings (ms) and optional
+   * PoS tags.  The lyrics text is embedded within each {@link JsonLyricsChar}.
+   */
+  phrases: JsonLyricsPhrase[];
+}
+
+/**
+ * Per-phrase lyrics data.
+ * @public
+ */
+declare interface JsonLyricsPhrase {
+  words: JsonLyricsWord[];
+}
+
+/**
+ * Per-character vocalization timing without embedded lyrics text.
+ * @public
+ */
+declare interface JsonLyricsTimingChar {
+  /** Timing-only card lyrics must not embed the lyrics text. */
+  char?: never;
+  startTime: number;
+  endTime: number;
+}
+
+/**
+ * Lyrics timing and source metadata used to run the standard lyrics text
+ * loading and parsing pipeline without another Songle request.
+ * @public
+ */
+declare interface JsonLyricsTimingData {
+  artist?: never;
+  name?: never;
+  url: string;
+  /** Absolute URL of the parser associated with the lyrics source. */
+  parserUrl: string;
+  phrases: JsonLyricsTimingPhrase[];
+}
+
+/** @public */
+declare interface JsonLyricsTimingPhrase {
+  words: JsonLyricsTimingWord[];
+}
+
+/** @public */
+declare interface JsonLyricsTimingWord {
+  characters: JsonLyricsTimingChar[];
+  pos?: never;
+  rawPoS?: never;
+  language?: never;
+}
+
+/**
+ * Per-word lyrics data including per-character vocalization timings and
+ * optional part-of-speech (PoS) tags.
+ * @public
+ */
+declare interface JsonLyricsWord {
+  /**
+   * Per-character vocalization timings with the character text embedded.
+   */
+  characters: JsonLyricsChar[];
+  /**
+   * Part of speech tag (e.g. "名詞", "Noun")
+   */
+  pos?: string;
+  /**
+   * Raw part of speech tag from the text parser
+   */
+  rawPoS?: string;
+  /**
+   * Language of the word
+   */
+  language?: string;
+}
+
+/**
+ * Human-friendly representation of one repetitive segment (e.g. a chorus)
+ * occurrence.  A single "chorus section" typically appears multiple times in a
+ * song; each appearance is one `JsonSegment`.
+ * All times are in milliseconds.
+ * @public
+ */
+declare interface JsonSegment {
+  /** Whether this segment is a chorus/hook */
+  chorus: boolean;
+  /** Segment start time in milliseconds */
+  startTime: number;
+  /** Segment end time in milliseconds */
+  endTime: number;
+}
+
+/**
+ * Simplified song metadata for use in {@link JsonDataEntry}.
+ *
+ * Only the properties required by the TextAlive rendering pipeline are
+ * included; the many internal Songle API fields are intentionally omitted.
+ * @public
+ */
+declare interface JsonSongData {
+  /**
+   * Unique string identifier for the song (Songle song code).
+   * Required when multiple songs are stored in the same JSON database so
+   * that lookups can distinguish between them.  May be omitted when only
+   * one entry is present (single-song scenario).
+   */
+  code?: string;
+  /**
+   * Numeric song ID (optional, used for legacy numeric ID lookups).
+   */
+  id?: number;
+  /** Song title */
+  name: string;
+  /**
+   * Permalink URL of the song (e.g. a YouTube URL).
+   * Used to locate the song by URL path.
+   */
+  permalink: string;
+  /** Artist name */
+  artistName: string;
 }
 
 /**
@@ -2121,9 +2406,7 @@ declare function linear(t: number): number;
  * Event listener for various loading procedures
  * @public
  */
-export declare type LoaderListener = DataLoaderListener &
-  BackgroundGraphicsListener &
-  TemplateListener;
+export declare type LoaderListener = DataLoaderListener;
 
 /**
  * 歌詞テキスト
@@ -2181,6 +2464,12 @@ export declare interface LyricsInfo extends LyricsTimingInfo {
  * @public
  */
 export declare interface LyricsTimingInfo {
+  /**
+   * 歌詞発声タイミングのID
+   *
+   * Lyrics ID
+   */
+  id: number;
   /**
    * 歌詞URL
    *
@@ -2259,7 +2548,7 @@ export declare class Matrix2D implements IMatrix2D {
     c?: number,
     d?: number,
     tx?: number,
-    ty?: number
+    ty?: number,
   );
   /** @inheritDoc */
   setValues(
@@ -2268,7 +2557,7 @@ export declare class Matrix2D implements IMatrix2D {
     c?: number,
     d?: number,
     tx?: number,
-    ty?: number
+    ty?: number,
   ): Matrix2D;
   /** @inheritDoc */
   append(
@@ -2277,7 +2566,7 @@ export declare class Matrix2D implements IMatrix2D {
     c: number,
     d: number,
     tx: number,
-    ty: number
+    ty: number,
   ): Matrix2D;
   /** @inheritDoc */
   prepend(
@@ -2286,7 +2575,7 @@ export declare class Matrix2D implements IMatrix2D {
     c: number,
     d: number,
     tx: number,
-    ty: number
+    ty: number,
   ): Matrix2D;
   /** @inheritDoc */
   appendMatrix(matrix: Matrix2D): Matrix2D;
@@ -2302,7 +2591,7 @@ export declare class Matrix2D implements IMatrix2D {
     skewX: number,
     skewY: number,
     regX: number,
-    regY: number
+    regY: number,
   ): Matrix2D;
   /** @inheritDoc */
   prependTransform(
@@ -2314,7 +2603,7 @@ export declare class Matrix2D implements IMatrix2D {
     skewX: number,
     skewY: number,
     regX: number,
-    regY: number
+    regY: number,
   ): Matrix2D;
   /** @inheritDoc */
   rotate(angle: number): Matrix2D;
@@ -2386,7 +2675,6 @@ export declare interface ParameterWidget {
    * Human-readable representation of this varible
    */
   title?: string | RegionalText;
-
   /**
    * パラメタの種類（例: `Slider`）
    *
@@ -2407,7 +2695,6 @@ export declare interface ParameterWidget {
         [value: string]: string;
       }
   )[];
-
   /**
    * パラメタの初期値
    *
@@ -2453,7 +2740,6 @@ export declare interface PartialVideoEntry {
    * サビなどの繰り返し区間のリビジョンID / Repetitive segment revision ID
    */
   repetitiveSegmentId?: number;
-
   /**
    * 動画の実データ / Video data
    */
@@ -2466,7 +2752,6 @@ export declare interface PartialVideoEntry {
  */
 declare class Phrase extends TextUnit implements IPhrase {
   constructor(video: Video, data: PhraseData);
-
   get children(): Word[];
   get previous(): Phrase;
   get next(): Phrase;
@@ -2512,86 +2797,77 @@ export declare interface PhraseData extends UnitData {
 export declare class Player implements IPlayer {
   /** @inheritDoc */
   get options(): PlayerOptions;
-
   /** @inheritDoc */
   get app(): IPlayerApp;
-
   /** @inheritDoc */
   get data(): IDataLoader;
-
   /** @inheritDoc */
   get video(): Video;
-
   /** @inheritDoc */
   get mediaElement(): HTMLElement;
   set mediaElement(element: HTMLElement);
-
   /** @inheritDoc */
   get mediaSourceElement(): HTMLElement;
-
   /** @inheritDoc */
   get mediaBannerElement(): HTMLElement;
-
   /** @inheritDoc */
   get mediaPosition(): number;
-
   /** @inheritDoc */
   get videoPosition(): number;
-
   /** @inheritDoc */
   get wait(): number;
   set wait(val: number);
   /** @inheritDoc */
   get fps(): number;
   set fps(val: number);
-
   /** @inheritDoc */
   get isLoading(): boolean;
   /** @inheritDoc */
   get isPlaying(): boolean;
-
   /** @inheritDoc */
   get isVideoSeeking(): boolean;
-
   /** @inheritDoc */
   get banner(): IPlayerBanner;
-
   /** @inheritDoc */
   get timer(): Timer;
-
-  /** @inheritDoc */
   set volume(val: number);
+  /** @inheritDoc */
   get volume(): number;
-
   /**
    * @param options - プレイヤーの初期化オプション / player options
    * @see {@link IPlayer.options}
    */
   constructor(options?: PlayerOptions);
-
   /** @inheritDoc */
   addListener(listener: PlayerListener): void;
   /** @inheritDoc */
   removeListener(listener: PlayerListener): boolean;
-
   /** @inheritDoc */
   createFromSongUrl(
     songUrl: string,
-    options?: PlayerVideoOptions
+    options?: PlayerVideoOptions,
   ): Promise<Video>;
-
+  /** @inheritDoc */
+  createFromCardData(
+    entry: JsonDataEntry,
+    options?: PlayerVideoOptions,
+  ): Promise<Video>;
+  /** @inheritDoc */
+  createFromCardUrl(
+    cardUrl: string,
+    options?: PlayerVideoOptions,
+  ): Promise<Video>;
   /** @inheritDoc */
   createFromSongPath(
     songPath: string,
-    options?: PlayerVideoOptions
+    options?: PlayerVideoOptions,
   ): Promise<Video>;
-
   /** @inheritDoc */
   createFromText(text: string, options?: PlayerVideoOptions): Promise<Video>;
-
   /** @inheritDoc */
   createFromJSON(json: VideoData, options?: PlayerVideoOptions): Promise<Video>;
-
+  /** @inheritDoc */
+  exportJsonDataEntry(): JsonDataEntry | null;
   /** @inheritDoc */
   getChoruses(): IRepetitiveSegment[];
   /** @inheritDoc */
@@ -2601,7 +2877,7 @@ export declare class Player implements IPlayer {
   /** @inheritDoc */
   findChorusChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IRepetitiveSegment>;
   /** @inheritDoc */
   getBeats(): IBeat[];
@@ -2610,7 +2886,7 @@ export declare class Player implements IPlayer {
   /** @inheritDoc */
   findBeatChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IBeat>;
   /** @inheritDoc */
   getChords(): IChord[];
@@ -2619,9 +2895,8 @@ export declare class Player implements IPlayer {
   /** @inheritDoc */
   findChordChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<IChord>;
-
   /** @inheritDoc */
   getVocalAmplitude(time: number): number;
   /** @inheritDoc */
@@ -2630,12 +2905,10 @@ export declare class Player implements IPlayer {
   getValenceArousal(time: number): ValenceArousalValue;
   /** @inheritDoc */
   getMedianValenceArousal(): ValenceArousalValue;
-
   /**
    * @deprecated Use of {@link Player.setMediaElement} is deprecated - set value with {@link IPlayer.mediaElement} property instead.
    */
   setMediaElement(element: HTMLElement): void;
-
   /** @inheritDoc */
   setVideoPosition(position: number): Promise<number>;
   /**
@@ -2654,10 +2927,8 @@ export declare class Player implements IPlayer {
   startVideoSeek(): void;
   /** @inheritDoc */
   endVideoSeek(): void;
-
   /** @inheritDoc */
   requestStageUpdate(): Promise<number>;
-
   /** @inheritDoc */
   dispose(): void;
 }
@@ -2774,6 +3045,12 @@ declare interface PlayerAppServer {
  */
 declare interface PlayerAppSongOptions {
   /**
+   * 解決済みの JsonDataEntry を返すカードURL
+   *
+   * Card URL returning a resolved JsonDataEntry.
+   */
+  cardUrl?: string;
+  /**
    * 歌詞ID / Lyrics ID
    */
   lyricId?: number;
@@ -2850,7 +3127,6 @@ export declare interface PlayerEventListener {
    * @param timer - Timer オブジェクト / Timer object
    */
   onTimerReady?(timer: Timer): void;
-
   /**
    * 音源メディアの配置先となるDOM要素が変更されたときに呼ばれる
    *
@@ -2858,7 +3134,6 @@ export declare interface PlayerEventListener {
    * @param el - 音源メディアの配置先となるDOM要素 / Media element
    */
   onMediaElementSet?(el: HTMLElement): void;
-
   /**
    * 音量が変更されたときに呼ばれる
    *
@@ -2980,7 +3255,7 @@ export declare const PlayerLogoImage =
  * @public
  */
 export declare type PlayerMediaPositionUpdateFunction = (
-  position: number
+  position: number,
 ) => Promise<number>;
 
 /**
@@ -3004,7 +3279,6 @@ export declare interface PlayerOptions {
    * A timer instance that controls the player status.
    */
   timer?: Timer;
-
   /**
    * 音源メディアの配置先となるDOM要素; 音源を埋め込むコンテナとして利用されるDOM要素です。
    *
@@ -3017,7 +3291,6 @@ export declare interface PlayerOptions {
    * Banner position.
    */
   mediaBannerPosition?: PlayerBannerPosition;
-
   /**
    * 時刻のアップデートイベントが発行されすぎるのを防ぐために使われるスロットリング機構の発行間隔です。
    *
@@ -3036,8 +3309,7 @@ export declare interface PlayerOptions {
    *
    * A list of font families to load. When `null` is set, all available fonts are loaded.
    */
-  fontFamilies?: (FontInfo | string)[];
-
+  fontFamilies?: (FontInfo | string)[] | null;
   /**
    * 声量情報を取得するか否か
    *
@@ -3065,7 +3337,6 @@ export declare interface PlayerVideoOptions {
    * Video data
    */
   video?: PartialVideoEntry;
-
   /**
    * 歌詞テキストの読み込み元
    *
@@ -3175,7 +3446,6 @@ declare class RenderingUnit extends TimedUnit implements IRenderingUnit {
   get startTime(): number;
   get endTime(): number;
   get duration(): number;
-
   getType(): number;
   toString(): string;
 }
@@ -3186,33 +3456,8 @@ declare class RenderingUnit extends TimedUnit implements IRenderingUnit {
  */
 export declare type RenderingUnitFunction = (
   now: number,
-  u: IRenderingUnit
+  u: IRenderingUnit,
 ) => void;
-
-/**
- * サビなどの繰り返し区間の情報 / Repetitive segment info (e.g., chorus segment)
- */
-declare class RepetitiveSegment
-  extends SongMapElement
-  implements IRepetitiveSegment
-{
-  /** @inheritDoc */
-  startTime: number;
-  /** @inheritDoc */
-  endTime: number;
-  /** @inheritDoc */
-  previous: RepetitiveSegment;
-  /** @inheritDoc */
-  next: RepetitiveSegment;
-  /** @inheritDoc */
-  index: number;
-  constructor();
-}
-
-declare interface RepetitiveSegments extends IRepetitiveSegments {
-  /** @inheritDoc */
-  segments: RepetitiveSegment[];
-}
 
 /**
  * @param t - Timing [0, 1]
@@ -3246,7 +3491,6 @@ export declare interface Song {
    * Song title
    */
   name: string;
-
   /**
    * 楽曲の再生時間長 [s]
    *
@@ -3265,7 +3509,6 @@ export declare interface Song {
    * Permalink URL
    */
   permalink: string;
-
   /**
    * アーティスト情報
    *
@@ -3277,7 +3520,6 @@ export declare interface Song {
      */
     name: string;
   };
-
   /**
    * 作成日時
    *
@@ -3318,7 +3560,6 @@ declare interface SongleSong {
  */
 export declare class SongleTimer implements Timer {
   private options;
-
   wait: number;
   constructor(options?: SongleTimerOptions);
   /**
@@ -3326,7 +3567,7 @@ export declare class SongleTimer implements Timer {
    *
    * @see {@link https://api.songle.jp/references/javascript#Player}
    */
-  get songlePlayer(): SonglePlayer;
+  get songlePlayer(): unknown;
   /** @inheritDoc */
   get isPlaying(): boolean;
   /**
@@ -3338,6 +3579,10 @@ export declare class SongleTimer implements Timer {
    */
   get withSync(): boolean;
   /** @inheritDoc */
+  get volume(): number;
+  /** @inheritDoc */
+  set volume(value: number);
+  /** @inheritDoc */
   get position(): number;
   /** @inheritDoc */
   initialize({
@@ -3346,7 +3591,6 @@ export declare class SongleTimer implements Timer {
     emitter,
     altSourceUrl: altUrl,
   }: TimerInitOptions): Promise<void>;
-
   /** @inheritDoc */
   play(): void;
   /** @inheritDoc */
@@ -3355,7 +3599,6 @@ export declare class SongleTimer implements Timer {
   pause(): void;
   /** @inheritDoc */
   seek(time: number): void;
-
   /** @inheritDoc */
   dispose(): void;
 }
@@ -3389,7 +3632,6 @@ export declare interface SongleTimerOptions {
    * @see {@link https://api.songle.jp/sync}
    */
   secretToken?: string;
-
   /**
    * Songle APIのエントリーポイント
    * - `import Songle from "songle-api"` のようにして得られるオブジェクト
@@ -3401,7 +3643,7 @@ export declare interface SongleTimerOptions {
    *
    * @see {@link https://api.songle.jp}
    */
-  songle?: Songle;
+  songle?: unknown;
 }
 
 /**
@@ -3424,7 +3666,6 @@ export declare interface SongLoaderListener {
    * @param reason - 失敗したときの理由 / Reason for failures (if any)
    */
   onSongMapLoad?(songMap: ISongMap, reason?: Error): void;
-
   /**
    * 声量の情報が読み込まれたときに呼ばれる
    *
@@ -3450,26 +3691,6 @@ export declare interface SongLoaderListener {
    */
   onValenceArousalLoad?(valenceArousal: ValenceArousal, reason?: Error): void;
 }
-
-/**
- * @public
- */
-declare abstract class SongMapElement implements TimedObject {
-  /** @inheritDoc */
-  abstract startTime: number;
-  /** @inheritDoc */
-  abstract endTime: number;
-  /** @inheritDoc */
-  get duration(): number;
-  /** @inheritDoc */
-  contains(time: number): boolean;
-  /** @inheritDoc */
-  overlaps(objOrStartTime: TimedObject | number, endTime?: number): boolean;
-  /** @inheritDoc */
-  progress(time: number): number;
-}
-
-export { sortedIndex };
 
 /**
  * 文字列をBase64エンコードしてデータURLとして取得する
@@ -3511,6 +3732,7 @@ declare class TextUnit extends RenderingUnit implements ITextUnit {
   get color(): Color;
   set color(val: Color);
   set font(val: Font);
+  get font(): Font;
   set fontFamily(val: string);
   get fontFamily(): string;
   set fontStyle(val: string);
@@ -3521,7 +3743,6 @@ declare class TextUnit extends RenderingUnit implements ITextUnit {
   get ascent(): number;
   get descent(): number;
   get height(): number;
-
   toString(): string;
 }
 
@@ -3565,9 +3786,9 @@ export declare interface TimedObjectsInRange<T extends TimedObject> {
   entered: T[];
   /** 指定区間内で終了したオブジェクト / Timed objects that ended within the specified time range */
   left: T[];
-  /** 指定区間の直後にあるオブジェクト / The last timed object before the specified time range */
+  /** 指定区間の直前にあるオブジェクト / The last timed object before the specified time range */
   previous: T | null;
-  /** 指定区間の直前にあるオブジェクト / The first timed object after the specified time range */
+  /** 指定区間の直後にあるオブジェクト / The first timed object after the specified time range */
   next: T | null;
 }
 
@@ -3646,6 +3867,12 @@ export declare interface Timer {
    * Interval for updating playback position [ms]
    */
   wait: number;
+  /**
+   * 再生音量 [0-100]
+   *
+   * Playback volume [0-100]
+   */
+  volume: number;
   /**
    * `Timer` の初期化（動画データの読み込みプロセスで一度だけ呼ばれます）
    *
@@ -3769,44 +3996,33 @@ export declare interface ValenceArousalValue {
  */
 declare class Video extends TimedUnit implements IVideo {
   get phrases(): Phrase[];
-
   get words(): Word[];
   get chars(): Char[];
-
   set duration(duration: number);
   get duration(): number;
   get startTime(): number;
   get endTime(): number;
-
   get phraseCount(): number;
-
   get wordCount(): number;
   get charCount(): number;
-
   get firstPhrase(): Phrase;
   get lastPhrase(): Phrase;
   get firstWord(): Word;
   get lastWord(): Word;
   get firstChar(): Char;
   get lastChar(): Char;
-
   constructor(data?: VideoData);
-
   addPhrase(phrase: Phrase): void;
-
   removePhrase(phrase: Phrase): boolean;
   removePhrases(): void;
-
   findIndex(unit: RenderingUnit): number;
-
   getPhrase(index: number): Phrase;
   getWord(index: number): Word;
   getChar(index: number): Char;
-
   findPhrase(time: number, options?: FindTimedObjectOptions): Phrase;
   findPhraseChange(
     startTime: number,
-    endTime: number
+    endTime: number,
   ): TimedObjectsInRange<Phrase>;
   findWord(time: number, options?: FindTimedObjectOptions): Word;
   findWordChange(startTime: number, endTime: number): TimedObjectsInRange<Word>;
@@ -3821,7 +4037,6 @@ export declare interface VideoData {
   startTime?: number;
   endTime?: number;
   duration?: number;
-
   phrases?: PhraseData[];
 }
 
@@ -3850,7 +4065,6 @@ declare class Word extends TextUnit implements IWord {
   get pos(): string;
   get rawPos(): string;
   get language(): string;
-
   get charCount(): number;
   get firstChar(): Char;
   get lastChar(): Char;
@@ -3870,3 +4084,16 @@ export declare interface WordData extends UnitData {
 }
 
 export {};
+
+declare type VocalAmplitude = number[];
+
+declare interface ValenceArousalUnit extends ValenceArousalValue {
+  t: [number, number];
+}
+
+declare interface ValenceArousal {
+  stats: {
+    median: ValenceArousalValue;
+  };
+  seq: ValenceArousalUnit[];
+}

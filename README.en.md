@@ -47,4 +47,4 @@ Please reach out to the developer team using [GitHub Issues](https://github.com/
 
 ---
 
-&copy; AIST TextAlive Project 2020-2024
+&copy; AIST TextAlive Project 2020-2026

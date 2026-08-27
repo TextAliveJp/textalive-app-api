@@ -45,4 +45,4 @@ npm install textalive-app-api
 
 ---
 
-&copy; AIST TextAlive Project 2020-2024
+&copy; AIST TextAlive Project 2020-2026
